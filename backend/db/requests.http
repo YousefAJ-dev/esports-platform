@@ -1,0 +1,298 @@
+######################### Dashboard requests #########################
+####################################################################
+
+@dashboard
+### GET Dashboard
+GET http://localhost:3000/api/dashboard
+
+######################### Event requests #########################
+####################################################################
+
+@all events
+### Create Event
+POST http://localhost:3000/api/events
+Content-Type: application/json
+
+{
+	"event_name": "Worlds 2026",
+	"description": "Global League Championship",
+	"location": "Tokyo Dome",
+	"start_on": "2026-11-10T18:00:00Z",
+	"end_on": "2026-11-10T22:00:00Z"
+}
+
+### Get all events
+GET http://localhost:3000/api/events
+
+
+### GET Specific event
+GET http://localhost:3000/api/events/1
+
+
+### GET ALL Sessions to specific event
+GET http://localhost:3000/api/events/1/sessions
+
+
+### GET Schedule of Event
+GET http://localhost:3000/api/events/1/schedule
+
+
+### GET Overview of Event
+GET http://localhost:3000/api/events/3/overview
+
+
+@eventId = 1
+### PUT REQUEST
+PUT http://localhost:3000/api/events/1
+Content-Type: application/json
+
+{
+	"event_name": "Philosophy vs Science Smackdown",
+	"description": "Historical standoff between two types of great minds",
+	"location": "Austin, Texas USA",
+	"start_on": "2020-05-16T17:00:00Z",
+	"end_on": "2020-05-16T22:00:00Z",
+	"status": "Completed"
+}
+
+### PATCH REQUEST
+PATCH http://localhost:3000/api/events/1
+Content-Type: application/json
+
+{
+	"status": "Completed"
+}
+
+
+### DELETE specific event
+DELETE http://localhost:3000/api/events/3
+
+
+######################### Session requests #########################
+####################################################################
+
+@Post Sessions
+### POST Session
+POST http://localhost:3000/api/sessions
+Content-Type: application/json
+
+{
+	"event_id": 1,
+	"session_name": "Round 1",
+	"scheduled_start": "2025-11-16T17:15:00Z",
+	"scheduled_end": "2025-11-16T18:00:00Z",
+	"session_type": "Standard"
+}
+
+### GET Session
+GET http://localhost:3000/api/sessions
+
+
+### GET Session by id
+GET http://localhost:3000/api/sessions/5
+
+
+### GET Teams of Session by id
+GET http://localhost:3000/api/sessions/5/teams
+
+
+### GET Teams of Session by id
+GET http://localhost:3000/api/sessions/12/overview
+
+
+### PATCH Session
+PATCH http://localhost:3000/api/sessions/2
+Content-Type: application/json
+
+{
+	"session_name": "T1 vs. Team Liquid"
+}
+
+
+### DELETE Session
+DELETE http://localhost:3000/api/sessions/2
+
+######################### Teams requests ###########################
+####################################################################
+
+### POST Teams
+POST http://localhost:3000/api/teams
+Content-Type: application/json
+
+{
+	"team_name": "The Thinkers",
+	"email": "thethinktank@thnk.com"
+}
+
+
+### GET Teams
+GET http://localhost:3000/api/teams
+
+
+### GET Teams w/ ID
+GET http://localhost:3000/api/teams/5
+
+
+### GET Team Overview
+GET http://localhost:3000/api/teams/3/roster
+
+
+### GET Team Overview
+GET http://localhost:3000/api/teams/3/overview
+
+
+### PATCH Teams
+PATCH http://localhost:3000/api/teams/2
+Content-Type: application/json
+
+{
+	"team_name": "Gen G"
+}
+
+
+### DELETE Teams
+DELETE http://localhost:3000/api/teams/3
+
+######################### Members requests #########################
+####################################################################
+
+### POST Members 
+POST http://localhost:3000/api/members
+Content-Type: application/json
+
+{
+	"member_name": "Stephen Hawking",
+	"display_name": "BlackHole",
+	"date_of_birth": "1942-01-08"
+}
+
+
+### GET Members
+GET http://localhost:3000/api/members
+
+
+### GET Members w/ ID
+GET http://localhost:3000/api/members/2
+
+
+### GET Member Overview
+GET http://localhost:3000/api/members/35/overview
+
+
+### PATCH Members
+PATCH http://localhost:3000/api/members/1
+Content-Type: application/json
+
+{
+	"display_name": "MCSquared"
+}
+
+
+### DELETE Members
+DELETE http://localhost:3000/api/members/3
+
+######################### Team Member requests #########################
+####################################################################
+
+### POST Team Member
+POST http://localhost:3000/api/team_members
+Content-Type: application/json
+
+{
+	"team_id": "5",
+	"member_id": "14",
+	"start_date": "2026-06-08",
+	"team_position": "Player"
+}
+
+
+### GET Team Member
+GET http://localhost:3000/api/team_members
+
+
+### GET Team Member w/ ID
+GET http://localhost:3000/api/team_members/2
+
+
+### PATCH Team Member
+PATCH http://localhost:3000/api/team_members/2
+Content-Type: application/json
+
+{
+	"team_name": "Gen G"
+}
+
+
+### DELETE Members
+DELETE http://localhost:3000/api/team_members/3
+
+
+#################### Session Teams requests ########################
+####################################################################
+
+### POST Session Teams
+POST http://localhost:3000/api/session_teams
+Content-Type: application/json
+
+{
+	"session_id": "5",
+	"team_id": "5"
+}
+
+
+### GET Session Team
+GET http://localhost:3000/api/session_teams
+
+
+### GET Session Team w/ ID
+GET http://localhost:3000/api/session_teams/2
+
+
+### PATCH Session Team
+PATCH http://localhost:3000/api/session_teams/2
+Content-Type: application/json
+
+{
+	"": ""
+}
+
+
+### DELETE Members
+DELETE http://localhost:3000/api/session_teams/3
+
+
+######################### USER requests ###########################
+####################################################################
+
+### POST USER
+POST http://localhost:3000/api/users
+Content-Type: application/json
+
+{
+	
+}
+
+
+### GET USER
+GET http://localhost:3000/api/users
+
+
+### GET USER w/ ID
+GET http://localhost:3000/api/users/5
+
+
+### GET USER Overview
+GET http://localhost:3000/api/users/7/overview
+
+
+### PATCH users
+PATCH http://localhost:3000/api/users/2
+Content-Type: application/json
+
+{
+	
+}
+
+
+### DELETE users
+DELETE http://localhost:3000/api/users/3
