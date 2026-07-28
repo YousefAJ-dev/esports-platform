@@ -2,10 +2,10 @@
 	"name": "esports-platform",
 	"version": "1.0.0",
 	"description": "Capstone project for event management, performance analytics, and role-based access control.",
-	"main": "backend/server.js",
+	"main": "server.js",
 	"scripts": {
-		"dev": "nodemon backend/server.js",
-		"start": "node backend/server.js"
+		"dev": "nodemon server.js",
+		"start": "node server.js"
 	},
 	"repository": {
 		"type": "git",
@@ -20,6 +20,7 @@
 	"homepage": "https://github.com/YousefAJ-dev/esports-platform#readme",
 	"dependencies": {
 		"bcrypt": "^6.0.0",
+		"cors": "^2.8.6",
 		"dotenv": "^17.2.3",
 		"express": "^4.19.1",
 		"pg": "^8.16.3"

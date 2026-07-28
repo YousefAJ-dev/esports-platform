@@ -1,5 +1,5 @@
 -- reset db
-\i db/schema/reset_data.sql
+\i backend/db/schema/reset_data.sql
 
 -- ====================================
 -- MEMBERS

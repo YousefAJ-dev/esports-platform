@@ -190,7 +190,7 @@ router.get('/:id/sessions', async (req, res) => {
 });
 
 
-// GET /api/events/id/overview
+// GET /api/events/id/schedule
 router.get('/:id/schedule', async (req, res) => {
 
 	try {
@@ -256,19 +256,19 @@ router.get('/:id/overview', async (req, res) => {
 
 				-- Count unique sessions belonging to this event
 				-- DISTINCT prevents counting the same session multiple times
-				COUNT(DISTINCT s.session_id) AS session_count,
-				COUNT(DISTINCT st.team_id) AS team_count,
+				COUNT(DISTINCT s.session_id)::INT AS session_count,
+				COUNT(DISTINCT st.team_id)::INT AS team_count,
 				
 				COUNT(DISTINCT s.session_id) FILTER 
-					( WHERE s.status = 'Completed' ) 
+					( WHERE s.status = 'Completed' )::INT
 					AS completed_session_count,
 				
 				COUNT(DISTINCT s.session_id) FILTER
-					( WHERE s.status = 'In-Progress' ) 
+					( WHERE s.status = 'In-Progress' )::INT 
 					AS ongoing_session_count,
 
 				COUNT(DISTINCT s.session_id) FILTER 
-					( WHERE s.status = 'Upcoming' ) 
+					( WHERE s.status = 'Upcoming' )::INT 
 					AS upcoming_session_count,
 
 				e.status

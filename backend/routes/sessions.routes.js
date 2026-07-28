@@ -223,7 +223,7 @@ router.get('/:id/overview', async (req, res) => {
 					CONCAT_WS(' ', u.first_name, u.last_name) AS manager_name,
 
 					COUNT(DISTINCT tm.member_id) FILTER 
-						( WHERE tm.end_date IS NULL )
+						( WHERE tm.end_date IS NULL )::INT
 						AS player_count,
 
 					ROW_NUMBER() OVER ( 

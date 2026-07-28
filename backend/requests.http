@@ -96,7 +96,7 @@ GET http://localhost:3000/api/sessions/5
 GET http://localhost:3000/api/sessions/5/teams
 
 
-### GET Teams of Session by id
+### GET Session overview by ID
 GET http://localhost:3000/api/sessions/12/overview
 
 

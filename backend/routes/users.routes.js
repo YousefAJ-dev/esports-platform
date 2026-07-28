@@ -136,26 +136,31 @@ router.get('/:id/overview', async (req, res) => {
 		const result = await pool.query(
 			`
 			SELECT 
-			u.first_name,
-			u.last_name, 
+			CONCAT_WS(' ', u.first_name, u.last_name) AS real_name,
 			u.username, 
 			r.role_name,
 			u.email,
 			t.team_name AS manager_of,
 			u.is_active
+
 			FROM users u
+
 			LEFT JOIN user_roles ur
 			ON u.user_id = ur.user_id
+
 			LEFT JOIN roles r
 			ON ur.role_id = r.role_id
+
 			LEFT JOIN team_users tu
 			ON u.user_id = tu.user_id
 				AND tu.end_date IS NULL
+
 			LEFT JOIN teams t
 			ON tu.team_id = t.team_id
+
 			WHERE u.user_id = $1
-			`,
-			[id]
+			`
+			, [id]
 		);
 
 		if (result.rows.length === 0) {

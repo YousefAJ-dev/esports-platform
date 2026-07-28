@@ -241,50 +241,65 @@ router.get('/:id/overview', async (req, res) => {
 			t.team_name,
 			t.contact_email,
 			t.is_active,
+			
 			CONCAT_WS(' ', u.first_name, u.last_name) AS user_realname,
+			
 			COUNT(DISTINCT m.member_id) FILTER 
-				( WHERE m.is_active IS TRUE )
+				( WHERE m.is_active IS TRUE )::INT
 				AS active_player_count,
+			
 			MAX (
 				CASE 
 					WHEN tm.team_position = 'Captain'
 					THEN m.real_name
 				END
 			) AS team_captain_rname,
+			
 			MAX (
 				CASE
 					WHEN tm.team_position = 'Captain'
 					THEN m.display_name
 				END
 			) AS team_captain_dname,
-			COUNT(DISTINCT st.session_id) AS total_matches,
+			
+			COUNT(DISTINCT st.session_id)::INT AS total_matches,
+			
 			COUNT(DISTINCT st.session_id) FILTER 
-				( WHERE s.status = 'Completed')
+				( WHERE s.status = 'Completed')::INT
 			 	AS matches_played,
 			COUNT(DISTINCT st.session_id) FILTER 
-				( WHERE s.status = 'In-Progress')
+				( WHERE s.status = 'In-Progress')::INT
 			 	AS matches_in_progress,
 			COUNT(DISTINCT st.session_id) FILTER 
-				( WHERE s.status = 'Upcoming')
+				( WHERE s.status = 'Upcoming')::INT
 			 	AS upcoming_matches,
-			COUNT(DISTINCT e.event_id) AS total_events_participated
+			
+			COUNT(DISTINCT e.event_id)::INT AS total_events_participated
+
 			FROM teams t
 			LEFT JOIN team_members tm
 			ON t.team_id = tm.team_id
 				AND tm.end_date IS NULL
+
 			LEFT JOIN members m
 			ON tm.member_id = m.member_id
+
 			LEFT JOIN team_users tu
 			ON t.team_id = tu.team_id
 				AND tu.end_date IS NULL
+
 			LEFT JOIN users u
 			ON tu.user_id = u.user_id
+
 			LEFT JOIN session_teams st
 			ON t.team_id = st.team_id
+
 			LEFT JOIN sessions s
 			ON st.session_id = s.session_id
+
 			LEFT JOIN events e
 			ON s.event_id = e.event_id
+			
 			WHERE t.team_id = $1
 			GROUP BY t.team_id, t.team_name, t.contact_email, 
 				t.is_active, u.first_name, u.last_name

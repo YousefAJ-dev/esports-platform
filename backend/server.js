@@ -1,9 +1,15 @@
 require('dotenv').config();
 
 const pool = require('./db/pool'); // this triggers db code
-const app = require('./app') // importing app.js
-
+const app = require('./app'); // importing app.js
+const cors = require('cors');
 const PORT = process.env.PORT || 3000;
+
+
+// allows React frontend to call express API during dev
+app.use(cors({
+	origin: 'http://localhost:5173/'
+}));
 
 
 // Immediately Invoked Async Function Expression (Async IIFE)

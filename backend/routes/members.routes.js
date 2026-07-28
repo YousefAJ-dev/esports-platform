@@ -138,30 +138,41 @@ router.get('/:id/overview', async (req, res) => {
 			m.real_name, 
 			m.display_name,
 			t.team_name,
-			EXTRACT(YEAR FROM AGE(CURRENT_DATE, m.date_of_birth)) AS age,
+			
+			EXTRACT(YEAR FROM AGE(CURRENT_DATE, m.date_of_birth))::INT AS age,
+			
 			tm.team_position,
 			m.is_active,
+			
 			COUNT(DISTINCT s.session_id) FILTER 
-				(WHERE s.status = 'Completed')
+				(WHERE s.status = 'Completed')::INT
 				AS matches_played_with_current_team,
+			
 			COUNT(DISTINCT e.event_id) FILTER 
-				(WHERE e.status = 'Completed')
+				(WHERE e.status = 'Completed')::INT
 				AS events_participated_with_current_team
+			
 			FROM members m
 			LEFT JOIN team_members tm
 			ON m.member_id = tm.member_id
 				AND tm.end_date IS NULL
+
 			LEFT JOIN teams t 
 			ON tm.team_id = t.team_id
+
 			LEFT JOIN session_teams st
 			ON t.team_id = st.team_id
+
 			LEFT JOIN sessions s
 			ON st.session_id = s.session_id
+
 			LEFT JOIN events e
 			ON s.event_id = e.event_id
+
 			WHERE m.member_id = $1
 			GROUP BY m.real_name, m.display_name, t.team_name,
-					m.date_of_birth, tm.team_position, m.is_active, tm.team_member_id
+					m.date_of_birth, tm.team_position, m.is_active, 
+					tm.team_member_id
 			ORDER BY tm.team_member_id DESC
 			`
 			, [id]
