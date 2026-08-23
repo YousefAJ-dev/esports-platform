@@ -8,37 +8,46 @@ type sidebarItem = {
 function Sidebar() {
 
 	const pages: sidebarItem[] = [
-		{ label: 'Dashboard', path: '/dashboard' },
+		{ label: 'Dashboard', path: '/dashboard'},
 		{ label: 'Events', path: '/events' },
-		{ label: 'Sessions', path: '/sessions' },
+		{ label: 'Matches', path: '/sessions' },
 		{ label: 'Teams', path: '/teams' },
 		{ label: 'Members', path: '/members' },
 		{ label: 'Users', path: '/users' }
 	];
 
-	//className = " bg-slate-700 rounded-sm p-2 shadow-xl/20 my-2 hover:bg-slate-800 hover:scale-105"
-
 	return (
-		<aside className="flex flex-col min-h-full  bg-gray-500">
+	<aside className="min-h-screen w-64 shrink-0 border-r border-slate-800 bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950 text-slate-100">
+		<div className="border-b border-purple-800/40 p-6">
+			<h1 className="text-xl font-bold text-white">
+				Admin Menu
+			</h1>
 
-			<h1 className="p-6">Admin Menu</h1>
+			<p className="mt-1 text-sm text-purple-300">
+				Arena Admin
+			</p>
+		</div>
 
-			<nav className="flex flex-col p-4 items-start w-64 list-none">
-				{pages.map(page =>
-					<li id={page.path} className="my-4">
-						<NavLink to={page.path} 
-						className = {({isActive}) => 
-						isActive
-							? "block rounded-md bg-slate-800 px-3 py-2 text-white"
-							: "block bg-slate-700 rounded-md px-3 py-2 text-slate-300 hover:bg-slate-800 hover:text-white hover:scale-105 hover:cursor-pointer"
-						}>
+		<nav className="p-4">
+			<ul className="flex list-none flex-col gap-2 p-0 m-0">
+				{pages.map((page) => (
+					<li key={page.path}>
+						<NavLink
+							to={page.path}
+							className={({ isActive }) =>
+								isActive
+									? "block rounded-lg border border-purple-300/30 bg-purple-700/50 px-4 py-3 text-white"
+									: "block rounded-lg px-4 py-3 text-slate-300 transition hover:translate-x-1 hover:bg-purple-900/40 hover:text-white"
+							}
+						>
 							{page.label}
 						</NavLink>
-					</li>)
-				}
-			</nav>
-		</aside>
-	)
+					</li>
+				))}
+			</ul>
+		</nav>
+	</aside>
+);
 }
 
 export default Sidebar;

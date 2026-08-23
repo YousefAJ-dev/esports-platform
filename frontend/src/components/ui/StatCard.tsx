@@ -1,16 +1,16 @@
-import type { StatCardProps } from "../../types/StatCardProps";
+import type { StatCardProps } from "../../types/statCardProps";
 
-function StatCard ( props : StatCardProps ) {
+function StatCard(props: StatCardProps) {
 
-	const displayValue = 
+	const displayValue =
 		typeof props.value === 'boolean'
 			? props.value ? "Active" : "Inactive"
-		: props.value;
+			: props.value;
 
-	return(
-		<div className="border-3 border-black rounded-md bg-gray-600 p-4 hover:bg-gray-700">
-			<p>{props.title}:</p>
-			<p>{displayValue ?? 'N/A'}</p>
+	return (
+		<div className="stat-card">
+			<p className="stat-id text-xl">{props.title}</p>
+			<p className="mt-1 text-3xl font-bold text-white">{displayValue ?? 'N/A'}</p>
 		</div>
 	);
 

@@ -32,6 +32,8 @@
   }
 }
 
+
+
 @media (prefers-color-scheme: dark) {
   :root {
     --text: #f7f9fc;
@@ -46,26 +48,68 @@
     --shadow:
       rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
   }
+}
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+@layer components {
+	.stat-card {
+		@apply block rounded-xl border border-slate-800 bg-slate-900 p-5 text-slate-100 shadow-sm transition;
+	}
+
+	.stat-card-clickable {
+		@apply hover:border-purple-700/70 hover:bg-slate-800 hover:shadow-lg hover:shadow-purple-950/30;
+	}
+
+	.stat-card-header {
+		@apply flex items-start justify-between gap-4;
+	}
+
+	.stat-id {
+		@apply text-sm font-medium text-purple-300;
+	}
+
+	.stat-title {
+		@apply mt-2 text-xl font-semibold text-white;
+	}
+
+	.stat-body {
+		@apply mt-5 space-y-3 text-sm;
+	}
+
+	.stat-field-label {
+		@apply text-slate-500;
+	}
+
+	.stat-field-value {
+		@apply font-medium text-slate-200;
+	}
+
+	.stat-field-grid {
+		@apply grid grid-cols-1 gap-3 sm:grid-cols-2;
+	}
+
+	.status-pill {
+		@apply rounded-full border border-purple-800/60 bg-purple-950/50 px-3 py-1 text-xs font-medium text-purple-200;
+	}
+
+	.stat-link-text {
+		@apply pt-5 text-sm font-medium text-purple-300;
+	}
+	.header-box {
+		@apply rounded-2xl border border-purple-900/50 bg-gradient-to-br from-slate-900 to-purple-950 p-6 shadow-lg shadow-purple-950/30
+	}
+	.main-content-layout{
+		@apply min-h-screen bg-slate-950 p-6 text-slate-100
+	}
 }
 
 #root {
-  width: 1126px;
   max-width: 100%;
-  margin: 0 auto;
   text-align: center;
   border-inline: 1px solid var(--border);
   min-height: 100svh;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-}
-
-body {
-  margin: 0;
 }
 
 h1,
@@ -83,31 +127,4 @@ h1 {
     font-size: 36px;
     margin: 20px 0;
   }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
 }

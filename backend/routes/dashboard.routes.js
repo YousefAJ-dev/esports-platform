@@ -59,7 +59,7 @@ router.get('/', async (_, res) => {
 			`
 		);
 
-		return res.status(200).json(result.rows);
+		return res.status(200).json(result.rows[0]);
 
 	} catch (error) {
 		

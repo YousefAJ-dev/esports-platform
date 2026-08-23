@@ -1,5 +1,5 @@
 -- reset db
-\i backend/db/schema/reset_data.sql
+\i db/schema/reset_data.sql
 
 -- ====================================
 -- MEMBERS
@@ -12,7 +12,7 @@ VALUES
 ('Stephen Hawking', 'SpaceBound', '1942-01-08'),
 ('Galileo Galilei', 'GGs', '1564-02-15'),
 ('Niels Bohr', 'Atomic', '1885-10-07'),
-('Leonhard Euler', 'Math2EZ', '1707-04-15'),
+('Leonhard Euler', 'Math2Ez', '1707-04-15'),
 
 ('Carl Friedrich Gauss', 'RNGauss', '1777-04-30'),
 ('Euclid', 'ShapeShifter', '0325-01-01'),
@@ -104,39 +104,39 @@ VALUES
 
 INSERT INTO events (event_name, description, location, start_on, end_on, status)
 VALUES
-('Spring Championship 2025',
-'Regional spring tournament',
+('Winter Championship 2025',
+'Regional Winter Tournament',
 'San Antonio, TX',
-'2025-03-01',
-'2025-03-03',
+'2025-12-01T10:00:00-06:00',
+'2025-12-02T15:00:00-06:00',
 'Completed'),
 
 ('Summer Invitational 2026',
 'Mid-season invitational event',
 'Dallas, TX',
-'2026-06-15',
-'2026-06-17',
+'2026-06-16T12:00:00-06:00',
+'2026-06-17T17:00:00-06:00',
 'Completed'),
 
 ('Fall Open 2026',
 'Open registration tournament',
 'Austin, TX',
-'2026-09-10',
-'2026-09-12',
+'2026-09-10T15:00:00-06:00',
+'2026-09-11T20:00:00-06:00',
 'In-Progress'),
 
 ('Winter Clash 2026',
 'Season-ending tournament',
 'Houston, TX',
-'2026-12-05',
-'2026-12-07',
+'2026-12-05T14:00:00-06:00',
+'2026-12-07T19:00:00-06:00',
 'Upcoming'),
 
 ('Legends Cup 2027',
 'Elite invitational event',
 'Las Vegas, NV',
-'2027-02-21',
-'2027-02-24',
+'2027-02-21T16:00:00-06:00',
+'2027-02-24T21:00:00-06:00',
 'Upcoming');
 
 
@@ -148,30 +148,30 @@ VALUES
 INSERT INTO sessions
 (event_id,scheduled_start,scheduled_end,actual_start,actual_end,session_type,status)
 VALUES
-(1,'2026-03-01 10:00','2026-03-01 12:00',NULL,NULL,'Qualifier','Completed'),
-(1,'2026-03-01 13:00','2026-03-01 15:00',NULL,NULL,'Qualifier','Completed'),
-(1,'2026-03-02 10:00','2026-03-02 12:00',NULL,NULL,'Quarter-Finals','Completed'),
-(1,'2026-03-02 13:00','2026-03-02 15:00',NULL,NULL,'Quarter-Finals','Completed'),
+(1,'2025-12-01T10:30:00-06:00','2025-12-01T11:30:00-06:00',NULL,NULL,'Qualifier','Completed'),
+(1,'2025-12-01T11:30:00-06:00','2025-12-01T12:30:00-06:00',NULL,NULL,'Qualifier','Completed'),
+(1,'2025-12-01T13:00:00-06:00','2025-12-01T14:00:00-06:00',NULL,NULL,'Quarter-Finals','Completed'),
+(1,'2025-12-01T14:00:00-06:00','2025-12-01T15:00:00-06:00',NULL,NULL,'Quarter-Finals','Completed'),
 
-(2,'2026-06-15 10:00','2026-06-15 12:00',NULL,NULL,'Qualifier','Completed'),
-(2,'2026-06-15 13:00','2026-06-15 15:00',NULL,NULL,'Qualifier','Completed'),
-(2,'2026-06-16 10:00','2026-06-16 12:00',NULL,NULL,'Quarter-Finals','Completed'),
-(2,'2026-06-17 18:00','2026-06-17 21:00',NULL,NULL,'Final','Completed'),
+(2,'2026-06-16T12:30:00-06:00','2026-06-16T13:30:00-06:00',NULL,NULL,'Qualifier','Completed'),
+(2,'2026-06-16T13:30:00-06:00','2026-06-16T14:30:00-06:00',NULL,NULL,'Qualifier','Completed'),
+(2,'2026-06-16T15:00:00-06:00','2026-06-16T16:00:00-06:00',NULL,NULL,'Quarter-Finals','Completed'),
+(2,'2026-06-16T16:00:00-06:00','2026-06-16T17:00:00-06:00',NULL,NULL,'Final','Completed'),
 
-(3,'2026-09-10 10:00','2026-09-10 12:00',NULL,NULL,'Qualifier','In-Progress'),
-(3,'2026-09-10 13:00','2026-09-10 15:00',NULL,NULL,'Qualifier','Upcoming'),
-(3,'2026-09-11 10:00','2026-09-11 12:00',NULL,NULL,'Quarter-Finals','Upcoming'),
-(3,'2026-09-12 18:00','2026-09-12 21:00',NULL,NULL,'Final','Upcoming'),
+(3,'2026-09-10T15:30:00-06:00','2026-09-10T16:30:00-06:00',NULL,NULL,'Qualifier','In-Progress'),
+(3,'2026-09-10T16:30:00-06:00','2026-09-10T17:30:00-06:00',NULL,NULL,'Qualifier','Upcoming'),
+(3,'2026-09-10T18:00:00-06:00','2026-09-10T19:00:00-06:00',NULL,NULL,'Quarter-Finals','Upcoming'),
+(3,'2026-09-10T19:00:00-06:00','2026-09-10T20:00:00-06:00',NULL,NULL,'Final','Upcoming'),
 
-(4,'2026-12-05 10:00','2026-12-05 12:00',NULL,NULL,'Qualifier','Upcoming'),
-(4,'2026-12-05 13:00','2026-12-05 15:00',NULL,NULL,'Qualifier','Upcoming'),
-(4,'2026-12-06 10:00','2026-12-06 12:00',NULL,NULL,'Semi-Final','Upcoming'),
-(4,'2026-12-07 18:00','2026-12-07 21:00',NULL,NULL,'Final','Upcoming'),
+(4,'2026-12-05T14:30:00-06:00','2026-12-05T15:30:00-06:00',NULL,NULL,'Qualifier','Upcoming'),
+(4,'2026-12-05T15:30:00-06:00','2026-12-05T16:30:00-06:00',NULL,NULL,'Qualifier','Upcoming'),
+(4,'2026-12-05T17:00:00-06:00','2026-12-05T18:00:00-06:00',NULL,NULL,'Semi-Final','Upcoming'),
+(4,'2026-12-05T18:00:00-06:00','2026-12-05T19:00:00-06:00',NULL,NULL,'Final','Upcoming'),
 
-(5,'2026-08-21 10:00','2027-02-21 12:00',NULL,NULL,'Qualifier','Upcoming'),
-(5,'2026-08-22 10:00','2027-02-22 12:00',NULL,NULL,'Quarter-Finals','Upcoming'),
-(5,'2026-08-23 15:00','2027-02-23 17:00',NULL,NULL,'Semi-Final','Upcoming'),
-(5,'2026-08-24 18:00','2027-02-24 21:00',NULL,NULL,'Final','Upcoming');
+(5,'2027-02-21T16:30:00-06:00','2027-02-21T17:30:00-06:00',NULL,NULL,'Qualifier','Upcoming'),
+(5,'2027-02-21T17:30:00-06:00','2027-02-21T18:30:00-06:00',NULL,NULL,'Quarter-Finals','Upcoming'),
+(5,'2027-02-21T19:00:00-06:00','2027-02-21T20:00:00-06:00',NULL,NULL,'Semi-Final','Upcoming'),
+(5,'2027-02-21T20:00:00-06:00','2027-02-21T21:00:00-06:00',NULL,NULL,'Final','Upcoming');
 
 
 -- ====================================
@@ -322,18 +322,18 @@ VALUES
 INSERT INTO users (first_name, last_name, username, email, password_hash, is_active)
 VALUES 
 ('Yousef', 'Alzubi', 'TheSysAdmin', 'noemail@noemail.com', 'dev_placeholder_hash', TRUE),
-('Oliver', 'Queen', 'O3OQueen', 'greenarrow@justice.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hZH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
-('Nara', 'Shikimaru', 'A2NShikimaru', 'lazyshinobi@hiddenleaf.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hZH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE), 
-('Albert', 'Einstein', 'TM1AEinstein', 'TheBrainiac@smartz.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hZH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE), 
-('The', 'Socrates', 'TM1TSocrates', 'TheThinker@philo.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hZH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
-('Wolfgang', 'Mozart', 'TM1WMozart', 'TheRhythm@music.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hZH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
-('Leonardo', 'DaVinci', 'TM1LDaVinci', 'MrLisa@artist.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hZH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
-('Morgan', 'Freeman', 'TM1AMFreeman', 'thenarrator@actor.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hZH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
-('Muhammad', 'Ali', 'TM1MAli', 'thefighter@sports.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hZH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
-('King', 'Zues', 'TM1KZues', 'godking@greekmyth.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hZH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
-('Goddess', 'Minerva', 'TM1GMinerva', 'goddesswisdom@romanmyth.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hZH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
-('Destroyer', 'Shiva', 'TM1DShiva', 'destroyer@hindude.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hZH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
-('Odin', 'AllFather', 'TM1OAllfather', 'allfather@norsemyth.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hZH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE);
+('Oliver', 'Queen', 'O3OQueen', 'greenarrow@justice.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
+('Nara', 'Shikimaru', 'A2NShikimaru', 'lazyshinobi@hiddenleaf.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE), 
+('Albert', 'Einstein', 'TM1AEinstein', 'TheBrainiac@smartz.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE), 
+('The', 'Socrates', 'TM1TSocrates', 'TheThinker@philo.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
+('Wolfgang', 'Mozart', 'TM1WMozart', 'TheRhythm@music.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
+('Leonardo', 'DaVinci', 'TM1LDaVinci', 'MrLisa@artist.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
+('Morgan', 'Freeman', 'TM1AMFreeman', 'thenarrator@actor.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
+('Muhammad', 'Ali', 'TM1MAli', 'thefighter@sports.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
+('King', 'zues', 'TM1Kzues', 'godking@greekmyth.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
+('Goddess', 'Minerva', 'TM1GMinerva', 'goddesswisdom@romanmyth.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
+('Destroyer', 'Shiva', 'TM1DShiva', 'destroyer@hindude.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
+('Odin', 'AllFather', 'TM1OAllfather', 'allfather@norsemyth.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE);
 
 -- ====================================
 -- ROLES

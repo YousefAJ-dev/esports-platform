@@ -1,40 +1,75 @@
-import StatCard from "../components/ui/StatCard";
+import { useEffect, useState } from "react";
+import type { SessionSummary } from "../types/sessions";
+import { SessionCard } from "../components/ui/SessionCard"
+import { getSessions } from "../api/sessionsApi";
 
 function SessionsPage (){
 
-	const pageStats = [
-		{ title: 'Event Name', value: "Fall Open 2026" }, 
-		{ title: 'Match Bracket', value: "Final" },
-		{ title: 'Scheduled Start', value: "2026-09-12 11pm CST" },
-		{ title: 'scheduled_end', value: "2026-09-13T02:00:00.000Z" },
-		{ title: 'Player Count For Team 1', value: "Chameleons" },
-		{ title: 'Team Name For Team 1', value: "Morgan Freeman" },
-		{ title: 'Manager Name For Team 1', value: 6 },
-		{ title: 'Player Count For Team 2', value: "Super Musicians" },
-		{ title: 'Team Name For Team 2', value: "Wolfgang Mozart" },
-		{ title: 'Manager Name For Team 2', value: 6 }
-	]
+	const [ sessions, setSessions ] = useState<SessionSummary[]>([]);
+	//const [ sessionOverview, setSessionOverview ] = useState<>();
 
-	const pageStatItems = pageStats.map(stat => (
-		<StatCard 
-			key={stat.title}
-			title={stat.title}
-			value={stat.value}
+	const [ errorMsg, setErrorMsg ] = useState<null | string>(null);
+	const [ isLoading, setIsLoading ] = useState(true);
+
+	useEffect( () => {
+		async function loadSessionData() {
+			try {
+				const data = await getSessions();
+				setSessions(data);
+			} catch {
+				setErrorMsg("Failed to Fetch Session Data")
+			} finally {
+				setIsLoading(false);
+			}
+		}
+
+		loadSessionData();
+
+	}, []);
+
+	const sessionsList = sessions.map( session => (
+		<SessionCard
+			key={session.session_id}
+			session={session}
 		/>));
 
 	return(
-		<section className="min-h-screen flex flex-col items-center bg-slate-800 px-10">
-			<div className="flex-1 py-15">
-				<p className="text-4xl">Sessions</p>
-				<p className="text-xl">An overview of sessions that belong to this platform</p>
-			</div>
-			<main  className="flex-3">
-				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-					{pageStatItems}
+		<section className="main-content-layout">
+			<div className="mx-auto max-w-7xl space-y-8">
+				{/* Header */}
+				<div className="header-box">
+					<p className="text-sm font-medium text-purple-300">
+						Matches
+					</p>
+					<h1 className="mt-2 text-4xl font-bold text-white">
+						Tournament Matches
+					</h1>
+					<p className="mt-2 text-slate-400">
+						An overview of sessions that belong to this platform
+					</p>
 				</div>
-			</main>
+				{/* Summary Bar */}
+				<div className="stat-card">
+					<p className="stat-title">
+						Total Matches:
+					</p>
+					<p className="mt-1 text-3xl font-bold text-white">
+						{sessions.length}
+					</p>
+				</div>
+				{/* Match Details */}
+				{sessions.length === 0 ? (
+						<div className="rounded-xl border border-slate-800 bg-slate-900 p-6 text-slate-400">
+							No events found.
+						</div>
+					) : (
+						<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+							{sessionsList}
+						</div>
+					)}
+			</div>
 		</section>
-	)
+	);
 }
 
 export default SessionsPage;

@@ -96,7 +96,13 @@ router.get('/', async (_, res) => {
 
 		const result = await pool.query(
 			`
-			SELECT session_id, session_type, scheduled_start, scheduled_end, session_type, status
+			SELECT 
+				session_id,
+				event_id, 
+				scheduled_start, 
+				scheduled_end, 
+				session_type, 
+				status
 			FROM sessions
 			ORDER BY session_id
 			`

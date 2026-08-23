@@ -11,11 +11,10 @@ router.post('/', async (req, res) => {
 
 		const requiredFields = [
 			'event_name',
-			'description',
 			'location',
 			'start_on',
 			'end_on'
-		]
+		];
 
 		const missingFields = getMissingFields(requiredFields, req.body)
 
@@ -25,6 +24,8 @@ router.post('/', async (req, res) => {
 				missingFields: missingFields
 			});
 		}
+		
+		const hasStatus = (status !== undefined && status !== null);
 
 		// 1. ----------------------------------------
 		// Extract values from the incoming request body
@@ -36,7 +37,29 @@ router.post('/', async (req, res) => {
 		//   ...
 		// }
 		// ----------------------------------------
-		const { event_name, description, location, start_on, end_on } = req.body;
+		const { event_name, description, location, start_on, end_on, status } = req.body;
+
+		let values = [event_name, description ?? null, location, start_on, end_on];
+
+		const query = !hasStatus
+			? 
+			`
+			INSERT INTO events 
+				(event_name, description, location, start_on, end_on) 
+			VALUES ($1, $2, $3, $4, $5, $6)
+			RETURNING event_id, event_name, description, start_on, end_on
+			`
+			:
+			`
+			INSERT INTO events 
+				(event_name, description, location, start_on, end_on) 
+			VALUES ($1, $2, $3, $4, $5)
+			RETURNING event_id, description, event_name, start_on, end_on, status
+			`;
+		
+		if ( hasStatus ){
+			values.push(status);
+		}
 
 		const start_date = new Date(start_on);
 		const end_date = new Date(end_on);
@@ -53,14 +76,7 @@ router.post('/', async (req, res) => {
 		// Values that replace $1 $2 $3 etc
 		// This prevents SQL injection
 		// ----------------------------------------
-		const result = await pool.query(
-			`
-			INSERT INTO events (event_name, description, location, start_on, end_on) 
-			VALUES ($1, $2, $3, $4, $5)
-			RETURNING event_id, event_name, start_on, end_on, status
-			`,
-			[event_name, description, location, start_on, end_on]
-		);
+		const result = await pool.query(query, values);
 
 		// 5. ----------------------------------------
 		// Send success response
@@ -122,7 +138,7 @@ router.get('/:id', async (req, res) => {
 		const id = req.params.id;
 
 		const result = await pool.query(`
-			SELECT event_id, event_name, location, start_on, end_on, status
+			SELECT event_id, event_name, description, location, start_on, end_on, status
 			FROM events
 			WHERE event_id = $1;
 			`,

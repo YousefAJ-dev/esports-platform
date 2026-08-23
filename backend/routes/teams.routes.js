@@ -54,7 +54,7 @@ router.get('/', async (_, res) => {
 
 		const result = await pool.query(
 			`
-			SELECT team_id, team_name, is_active
+			SELECT team_id, team_name, contact_email, is_active
 			FROM teams
 			ORDER BY team_id
 			`

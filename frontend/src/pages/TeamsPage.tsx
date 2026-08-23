@@ -1,27 +1,32 @@
-import StatCard from "../components/ui/StatCard";
+import { useState, useEffect } from "react";
+import type { TeamSummary } from "../types/teams";
+import { getTeams } from "../api/teamsApi";
+import TeamCard from "../components/ui/TeamCard";
 
 function TeamsPage (){
 
-	const pageStats = [
-		{ title: 'Team Name', value: "Super Musicians" }, 
-		{ title: 'Team Contact Email', value: "musicians@arena.gg" },
-		{ title: 'Team Activity', value: true },
-		{ title: 'Manager Name', value: "Wolfgang Mozart" },
-		{ title: 'Active Player Count', value: 6 },
-		{ title: 'Captain Name', value: "Rihanna Fenty" },
-		{ title: 'Captain Display Name', value: "Riri" },
-		{ title: 'Total Matches', value: 4 },
-		{ title: 'Matches Played', value: 2 },
-		{ title: 'Matches In Progess', value: 0 },
-		{ title: 'Upcoming Matches', value: 2 },
-		{ title: 'Total Events Participated', value: 4 }
-	]
+	const [ teams, setTeams ] = useState<TeamSummary[]>([]);
+	const [ errorMsg, setErrorMsg ] = useState<null|string>(null);
+	const [ isLoading, setIsLoading ] = useState<boolean>(true);
 
-	const pageStatItems = pageStats.map(stat => (
-		<StatCard 
-			key={stat.title}
-			title={stat.title}
-			value={stat.value}
+	useEffect( () => {
+		async function loadSessionData() {
+			try {
+				const data = await getTeams();
+				setTeams(data);
+			} catch {
+				setErrorMsg("Failed to Fetch Session Data")
+			} finally {
+				setIsLoading(false);
+			}
+		}
+		loadSessionData();
+	}, []);
+
+	const TeamsList = teams.map(team => (
+		<TeamCard 
+			key={team.team_id}
+			team={team}
 		/>));
 
 	return(
@@ -32,7 +37,7 @@ function TeamsPage (){
 			</div>
 			<main  className="flex-3">
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-					{pageStatItems}
+					{TeamsList}
 				</div>
 			</main>
 		</section>
