@@ -12,3 +12,7 @@ export function getEventByID(id:string | undefined):Promise<EventSummary> {
 export function getEventOverview(id:string | undefined):Promise<EventOverview> {
 	return apiRequest<EventOverview>(`/events/${id}/overview`);
 }
+
+export function updateEvent(id:string | undefined):Promise<EventSummary> {
+	return apiRequest<EventSummary>(`/events/${id}`)
+}

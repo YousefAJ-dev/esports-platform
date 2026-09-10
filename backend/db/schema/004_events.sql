@@ -7,6 +7,9 @@ CREATE TABLE events(
 	location TEXT NOT NULL,
 	start_on TIMESTAMPTZ NOT NULL,
 	end_on TIMESTAMPTZ NOT NULL,
+	timezone TEXT NOT NULL DEFAULT 'America/Chicago',
 	status status_enum NOT NULL DEFAULT 'Upcoming',
 	created_on TIMESTAMPTZ NOT NULL DEFAULT NOW()
+
+	CONSTRAINT chk_event_dates CHECK (end_on > start_on)
 );

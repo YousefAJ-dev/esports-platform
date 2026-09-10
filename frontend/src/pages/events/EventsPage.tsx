@@ -5,7 +5,7 @@ import EventCard from "../../components/ui/EventCards";
 
 function EventsPage() {
 	const [events, setEvents] = useState<EventSummary[]>([]);
-	const [error, setError] = useState<string | null>(null);
+	const [errorMsg, setErrorMsg] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {
@@ -14,7 +14,7 @@ function EventsPage() {
 				const data = await getEvents();
 				setEvents(data);
 			} catch {
-				setError("Failed to load event data");
+				setErrorMsg("Failed to load event data");
 			} finally {
 				setIsLoading(false);
 			}
@@ -31,11 +31,11 @@ function EventsPage() {
 		);
 	}
 
-	if (error) {
+	if (errorMsg) {
 		return (
 			<section className="min-h-screen bg-slate-950 p-6 text-slate-100">
 				<div className="stat-card">
-					{error}
+					{errorMsg}
 				</div>
 			</section>
 		);

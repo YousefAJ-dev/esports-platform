@@ -1,3 +1,5 @@
+import type React from "react";
+
 type loadAPIData = {
 	getData: Object,
 	setError: string,
@@ -20,4 +22,33 @@ export function convertDate(d:string){
 	});
 
 	return date;
+}
+
+export function inputChangeHandler<T extends object>( e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>, setFormData: React.Dispatch<React.SetStateAction<T | null>> ){
+
+	const { name, value } = e.target;
+
+	setFormData( (currentData) => {
+
+		if (!currentData){ return currentData };
+
+		return {
+			...currentData,
+			[name]: value
+		} as T;
+
+	});
+
+};
+
+
+export function convertDateToInput(date:string){
+
+	const minute = String(new Date(date).getMinutes()).padStart(2, "0");
+	const hour = String(new Date(date).getHours()).padStart(2, "0");
+	const year = String(new Date(date).getFullYear()).padStart(2, "0");
+	const month = String(new Date(date).getMonth() + 1).padStart(2, "0");
+	const day = String(new Date(date).getDate()).padStart(2, "0");
+
+	return `${year}-${month}-${day}T${hour}:${minute}`;
 }

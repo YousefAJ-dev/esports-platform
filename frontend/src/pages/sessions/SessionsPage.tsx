@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import type { SessionSummary } from "../types/sessions";
-import { SessionCard } from "../components/ui/SessionCard"
-import { getSessions } from "../api/sessionsApi";
+import type { SessionSummary } from "../../types/sessions";
+import { SessionCard } from "../../components/ui/SessionCard"
+import { getSessions } from "../../api/sessionsApi";
+import { Link, useParams } from "react-router";
 
 function SessionsPage (){
 
@@ -26,6 +27,28 @@ function SessionsPage (){
 		loadSessionData();
 
 	}, []);
+
+	if (isLoading){
+		return (
+			<section className="min-h-screen bg-slate-950 p-6 text-slate-100">
+				<p className="text-purple-300">Loading sessions...</p>
+			</section>
+		);
+	}
+
+	if (errorMsg){
+		return (
+			<section className="min-h-screen bg-slate-950 p-6 text-slate-100">
+				<div className="stat-card">
+					{errorMsg}
+				</div>
+			</section>
+		);
+	}
+
+	if (!sessions){
+		return; 
+	}
 
 	const sessionsList = sessions.map( session => (
 		<SessionCard
@@ -60,10 +83,12 @@ function SessionsPage (){
 				{/* Match Details */}
 				{sessions.length === 0 ? (
 						<div className="rounded-xl border border-slate-800 bg-slate-900 p-6 text-slate-400">
-							No events found.
+							No matches found.
 						</div>
 					) : (
-						<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+						<div 
+							className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+						>
 							{sessionsList}
 						</div>
 					)}

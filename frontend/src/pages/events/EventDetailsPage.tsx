@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import type { EventOverview, EventSummary } from "../../types/events";
 import { getEventByID, getEventOverview } from "../../api/eventsApi";
 import { convertDate } from "../../helper/helperFunctions";
@@ -28,6 +28,7 @@ export function EventDetailPage() {
 
 				const data2 = await getEventOverview(id);
 				setEventOverview(data2);
+
 			} catch {
 				setErrorMsg("Failed to fetch Event Data");
 			} finally {
@@ -39,7 +40,11 @@ export function EventDetailPage() {
 	}, [id]);
 
 	if (isLoading) {
-		return <p>Loading event...</p>;
+		return (
+			<section className="min-h-screen bg-slate-950 p-6 text-slate-100">
+				<p className="text-purple-300">Loading events...</p>
+			</section>
+		);
 	}
 
 	if (errorMsg) {
@@ -65,17 +70,26 @@ export function EventDetailPage() {
 				</h1>
 
 				<p className="mt-2 text-slate-400">
-					{event.location ?? "Location TBA"}
+					{event.description ?? "An Esports Tournament"}
 				</p>
 			</div>
 
 			{/* Event Details */}
 			<section>
+				<div className="flex justify-end">
+					<Link 
+					to={ `/events/${event.event_id}/edit` }
+					type="button"
+					className="green-btn green-btn-clickable">
+						Edit
+					</Link>
+				</div>
+
 				<h2 className="mb-4 text-2xl font-semibold text-white">
 					Event Details
 				</h2>
 
-				<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+				<div className="admin-details-page-grid">
 					<div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
 						<p className="text-sm text-slate-400">Start Date</p>
 						<p className="mt-1 text-lg font-semibold text-white">

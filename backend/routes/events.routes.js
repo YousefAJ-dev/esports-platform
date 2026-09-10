@@ -37,9 +37,13 @@ router.post('/', async (req, res) => {
 		//   ...
 		// }
 		// ----------------------------------------
-		const { event_name, description, location, start_on, end_on, status } = req.body;
+		const { event_name, description, location, start_on, end_on, timezone, status } = req.body;
 
-		let values = [event_name, description ?? null, location, start_on, end_on];
+		if (!timezone){
+			timezone === 'America/Chicago';
+		}
+
+		let values = [event_name, description ?? null, location, start_on, end_on, timezone];
 
 		const query = !hasStatus
 			? 
@@ -47,14 +51,14 @@ router.post('/', async (req, res) => {
 			INSERT INTO events 
 				(event_name, description, location, start_on, end_on) 
 			VALUES ($1, $2, $3, $4, $5, $6)
-			RETURNING event_id, event_name, description, start_on, end_on
+			RETURNING event_id, event_name, description, start_on, end_on, timezone
 			`
 			:
 			`
 			INSERT INTO events 
 				(event_name, description, location, start_on, end_on) 
 			VALUES ($1, $2, $3, $4, $5)
-			RETURNING event_id, description, event_name, start_on, end_on, status
+			RETURNING event_id, event_name, description, start_on, end_on, timezone, status
 			`;
 		
 		if ( hasStatus ){
@@ -70,19 +74,8 @@ router.post('/', async (req, res) => {
 			});
 		}
 
-		// 3. ----------------------------------------
-		// Run SQL query using PostgreSQL pool
-		// pool.query sends the SQL command to the database
-		// Values that replace $1 $2 $3 etc
-		// This prevents SQL injection
-		// ----------------------------------------
 		const result = await pool.query(query, values);
 
-		// 5. ----------------------------------------
-		// Send success response
-		// result.rows[0] contains the inserted row
-		// RETURNING in SQL allows us to get the new record
-		// ----------------------------------------
 		res.status(201).json(result.rows[0]);
 
 
@@ -138,7 +131,7 @@ router.get('/:id', async (req, res) => {
 		const id = req.params.id;
 
 		const result = await pool.query(`
-			SELECT event_id, event_name, description, location, start_on, end_on, status
+			SELECT event_id, event_name, description, location, start_on, end_on, timezone, status
 			FROM events
 			WHERE event_id = $1;
 			`,

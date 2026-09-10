@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { convertDate, convertTime } from "../../helper/helperFunctions";
 import type { SessionCardProp } from "../../types/sessions";
 
@@ -7,7 +8,10 @@ export function SessionCard( {session} : SessionCardProp ){
 	const end_date = convertDate(session.scheduled_end);
 
 	return(
-		<div className="stat-card stat-card-clickable">
+		<Link 
+			to={`/sessions/${session.session_id}`} 
+			className="stat-card stat-card-clickable"
+		>
 			<div className="stat-card-header">
 				<p className="stat-id">
 					Match #{session.session_id}
@@ -40,7 +44,7 @@ export function SessionCard( {session} : SessionCardProp ){
 					View details →
 				</p>
 			</div>
-		</div>
+		</Link>
 	);
 
 }

@@ -1,10 +1,11 @@
 export type EventSummary = {
 	event_id: number, 
 	event_name: string, 
-	description: string,
+	description?: string | null,
 	location: string, 
 	start_on: string, 
 	end_on: string, 
+	timezone: string,
 	status: string
 }
 
@@ -17,6 +18,15 @@ export type EventOverview = {
 	ongoing_session_count: number,
 	upcoming_session_count: number,
 	status: string
+};
+
+export type UpdateEventForm = {
+	event_name?: string,
+	description?: string,
+	location?: string,
+	start_on?: string,
+	end_on?: string,
+	status?: string
 };
 
 export type EventCardProp = {

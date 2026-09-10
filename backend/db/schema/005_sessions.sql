@@ -5,6 +5,7 @@ CREATE TABLE sessions(
 	event_id INTEGER NOT NULL,
 	scheduled_start TIMESTAMPTZ NOT NULL,
 	scheduled_end TIMESTAMPTZ NOT NULL,
+	timezone TEXT NOT NULL DEFAULT 'America/Chicago',
 	actual_start TIMESTAMPTZ,
 	actual_end TIMESTAMPTZ,
 	session_type session_type_enum NOT NULL,
@@ -14,5 +15,11 @@ CREATE TABLE sessions(
 	CONSTRAINT fk_events
 		FOREIGN KEY (event_id)
 		REFERENCES events(event_id)
-		ON DELETE CASCADE
+		ON DELETE CASCADE,
+
+	CONSTRAINT chk_session_schedule_date CHECK (scheduled_end > scheduled_start),
+
+	CONSTRAINT chk_session_actual_date CHECK (actual_end > actual_start)
+
+
 );
