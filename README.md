@@ -214,7 +214,7 @@ Make sure the following are installed:
 ### Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/YousefAJ-dev/esports-platform/
 cd esports-platform
 ```
 
