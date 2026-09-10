@@ -186,17 +186,25 @@ POST /api/events
 
 ## Screenshots
 
-### Event Management
-
-[Add screenshot here]
-
 ### Dashboard
 
-[Add screenshot here]
+<img width="2535" height="1264" alt="image" src="https://github.com/user-attachments/assets/f742105e-9183-43ad-9ec3-6a24d7d6add8" />
+
+### Event Management
+
+<img width="2535" height="1254" alt="image" src="https://github.com/user-attachments/assets/97e7e08b-fe5e-4a37-a9b4-1801ee93814e" />
+
+### Event Details
+
+<img width="2531" height="1245" alt="image" src="https://github.com/user-attachments/assets/d29b9588-83de-41bb-a9a9-d27d1d42a14a" />
+
+### Event Edit
+
+<img width="2541" height="1251" alt="image" src="https://github.com/user-attachments/assets/74927b00-82e3-4ab3-9266-3e7551cb5715" />
 
 ### Event Creation
 
-[Add screenshot here]
+[Screenshot Here]
 
 > Screenshots will continue to be updated as frontend development progresses.
 
