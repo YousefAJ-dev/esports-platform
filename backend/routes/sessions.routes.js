@@ -135,7 +135,7 @@ router.get('/:id', async (req, res) => {
 
 		const result = await pool.query(
 			`
-			SELECT session_id, session_type, scheduled_start, scheduled_end, session_type, status
+			SELECT session_id, event_id, session_type, scheduled_start, scheduled_end, actual_start, actual_end, session_type, status
 			FROM sessions
 			WHERE session_id = $1
 			`, [id]
@@ -221,9 +221,6 @@ router.get('/:id/overview', async (req, res) => {
 			WITH session_team_details AS (
 				SELECT 
 					e.event_name,
-					s.session_type AS match_bracket,
-					s.scheduled_start,
-					s.scheduled_end,
 					t.team_name,
 
 					CONCAT_WS(' ', u.first_name, u.last_name) AS manager_name,
@@ -267,9 +264,6 @@ router.get('/:id/overview', async (req, res) => {
 			
 			SELECT
 				event_name,
-				match_bracket,
-				scheduled_start,
-				scheduled_end,
 				
 				MAX(CASE WHEN team_number = 1 THEN team_name END) AS team_1,
 				MAX(CASE WHEN team_number = 1 THEN manager_name END) AS manager_1,
@@ -280,7 +274,7 @@ router.get('/:id/overview', async (req, res) => {
 				MAX(CASE WHEN team_number = 2 THEN player_count END) AS player_count_2
 
 			FROM session_team_details
-			GROUP BY event_name, match_bracket, scheduled_start, scheduled_end
+			GROUP BY event_name
 			`, [id]
 		);
 
@@ -290,7 +284,7 @@ router.get('/:id/overview', async (req, res) => {
 			});
 		}
 
-		return res.status(200).json(result.rows);
+		return res.status(200).json(result.rows[0]);
 
 	} catch (error) {
 

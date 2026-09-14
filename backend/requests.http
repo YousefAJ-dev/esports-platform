@@ -60,7 +60,7 @@ PATCH http://localhost:3000/api/events/1
 Content-Type: application/json
 
 {
-	"status": "Completed"
+	"status": "In-Progress"
 }
 
 
@@ -89,7 +89,7 @@ GET http://localhost:3000/api/sessions
 
 
 ### GET Session by id
-GET http://localhost:3000/api/sessions/5
+GET http://localhost:3000/api/sessions/1
 
 
 ### GET Teams of Session by id
@@ -97,7 +97,7 @@ GET http://localhost:3000/api/sessions/5/teams
 
 
 ### GET Session overview by ID
-GET http://localhost:3000/api/sessions/12/overview
+GET http://localhost:3000/api/sessions/1/overview
 
 
 ### PATCH Session
@@ -105,7 +105,7 @@ PATCH http://localhost:3000/api/sessions/2
 Content-Type: application/json
 
 {
-	"session_name": "T1 vs. Team Liquid"
+	"actual_": "T1 vs. Team Liquid"
 }
 
 

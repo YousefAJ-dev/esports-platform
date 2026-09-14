@@ -55,6 +55,10 @@
 		@apply block rounded-xl border border-slate-800 bg-slate-900 p-5 text-slate-100 shadow-sm transition;
 	}
 
+	.stat-card-purple {
+		@apply rounded-xl border border-purple-800/60 bg-purple-950/40 p-5
+	}
+
 	.stat-card-clickable {
 		@apply hover:border-purple-700/70 hover:bg-slate-800 hover:shadow-lg hover:shadow-purple-950/30;
 	}
@@ -63,8 +67,20 @@
 		@apply flex items-start justify-between gap-4;
 	}
 
-	.stat-id {
+	.light-purple-text {
 		@apply text-sm font-medium text-purple-300;
+	}
+	
+	.lighter-purple-text {
+		@apply mt-1 text-lg font-semibold text-purple-100;
+	}
+
+	.light-text {
+		@apply text-sm text-slate-400;
+	}
+
+	.value-text {
+		@apply mt-1 text-lg font-semibold text-white;
 	}
 
 	.stat-title {

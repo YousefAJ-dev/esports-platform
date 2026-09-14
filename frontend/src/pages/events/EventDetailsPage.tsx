@@ -79,7 +79,6 @@ export function EventDetailPage() {
 				<div className="flex justify-end">
 					<Link 
 					to={ `/events/${event.event_id}/edit` }
-					type="button"
 					className="green-btn green-btn-clickable">
 						Edit
 					</Link>
@@ -135,28 +134,28 @@ export function EventDetailPage() {
 							</p>
 						</div>
 
-						<div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+						<div className="stat-card">
 							<p className="text-sm text-slate-400">Completed</p>
 							<p className="mt-2 text-3xl font-bold text-white">
 								{eventOverview.completed_session_count}
 							</p>
 						</div>
 
-						<div className="rounded-xl border border-purple-800/60 bg-purple-950/40 p-5">
+						<div className="stat-card">
 							<p className="text-sm text-purple-300">Ongoing</p>
 							<p className="mt-2 text-3xl font-bold text-purple-100">
 								{eventOverview.ongoing_session_count}
 							</p>
 						</div>
 
-						<div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+						<div className="stat-card">
 							<p className="text-sm text-slate-400">Upcoming</p>
 							<p className="mt-2 text-3xl font-bold text-white">
 								{eventOverview.upcoming_session_count}
 							</p>
 						</div>
 
-						<div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+						<div className="stat-card">
 							<p className="text-sm text-slate-400">Teams</p>
 							<p className="mt-2 text-3xl font-bold text-white">
 								{eventOverview.team_count}

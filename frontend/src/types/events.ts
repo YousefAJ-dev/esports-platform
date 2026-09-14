@@ -20,14 +20,7 @@ export type EventOverview = {
 	status: string
 };
 
-export type UpdateEventForm = {
-	event_name?: string,
-	description?: string,
-	location?: string,
-	start_on?: string,
-	end_on?: string,
-	status?: string
-};
+export type UpdateEventPayload = Partial<EventSummary>;
 
 export type EventCardProp = {
 	event: EventSummary;

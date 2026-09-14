@@ -1,20 +1,28 @@
 import { useEffect, useState } from "react";
 import type { EventSummary } from "../../types/events";
-import { useParams } from "react-router";
-import { getEventByID } from "../../api/eventsApi";
+import { useNavigate, useParams } from "react-router";
+import { getEventByID, updateEventByID } from "../../api/eventsApi";
 import { convertDateToInput, inputChangeHandler } from "../../helper/helperFunctions";
 
 export function EventDetailsEdit() {
 
+	const { id } = useParams();
+
+	const navigate = useNavigate();
+	
 	const [formData, setFormData] = useState<EventSummary | null>(null);
 	const [errorMsg, setErrorMsg] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 
-	const { id } = useParams();
-
 	const timeZones = Intl.supportedValuesOf("timeZone");
+	
 
 	useEffect(() => {
+
+		if (!id) {
+			<p className="value-text">ID could not be found</p>
+			return;
+		}
 
 		async function loadEventData() {
 			try {
@@ -53,6 +61,19 @@ export function EventDetailsEdit() {
 		inputChangeHandler(e, setFormData);
 	};
 
+
+	const handleSubmit:React.SubmitEventHandler<HTMLFormElement> = async (e) => {
+		e.preventDefault(); // Do not refresh browser on submit
+
+		try {
+			await updateEventByID(id, formData); // update the data
+			navigate(`/events/${id}`); // go back to that sessions detail page
+		} catch (error) {
+			
+		}
+
+	}
+
 	const startDate = convertDateToInput(formData.start_on);
 	const endDate = convertDateToInput(formData.end_on);
 
@@ -67,7 +88,10 @@ export function EventDetailsEdit() {
 			</div>
 
 			{/* Edit Form */}
-			<form className="mt-10 stat-card">
+			<form 
+				onSubmit={handleSubmit}
+				className="mt-10 stat-card"
+			>
 
 				<div className="mt-7 grid grid-cols-[160px_1fr] gap-x-4 gap-y-5 items-center">
 

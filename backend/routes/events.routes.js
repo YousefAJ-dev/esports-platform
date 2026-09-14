@@ -9,6 +9,16 @@ const { getMissingFields } = require('../utils/validation');
 router.post('/', async (req, res) => {
 	try {
 
+		const {
+			event_name,
+			description,
+			location,
+			start_on,
+			end_on,
+			timezone,
+			status
+		} = req.body;
+
 		const requiredFields = [
 			'event_name',
 			'location',
@@ -24,57 +34,33 @@ router.post('/', async (req, res) => {
 				missingFields: missingFields
 			});
 		}
-		
-		const hasStatus = (status !== undefined && status !== null);
 
-		// 1. ----------------------------------------
-		// Extract values from the incoming request body
-		// req.body comes from JSON sent by the client
-		// Example client request:
-		// {
-		//   "event_name": "Worlds 2026",
-		//   "location": "Tokyo Dome",
-		//   ...
-		// }
-		// ----------------------------------------
-		const { event_name, description, location, start_on, end_on, timezone, status } = req.body;
+		const eventTimeZone = timezone ?? 'America/Chicago';
+		const eventStatus = status ?? 'Upcoming';
 
-		if (!timezone){
-			timezone === 'America/Chicago';
-		}
-
-		let values = [event_name, description ?? null, location, start_on, end_on, timezone];
-
-		const query = !hasStatus
-			? 
-			`
-			INSERT INTO events 
-				(event_name, description, location, start_on, end_on) 
-			VALUES ($1, $2, $3, $4, $5, $6)
-			RETURNING event_id, event_name, description, start_on, end_on, timezone
-			`
-			:
-			`
-			INSERT INTO events 
-				(event_name, description, location, start_on, end_on) 
-			VALUES ($1, $2, $3, $4, $5)
-			RETURNING event_id, event_name, description, start_on, end_on, timezone, status
-			`;
-		
-		if ( hasStatus ){
-			values.push(status);
-		}
-
-		const start_date = new Date(start_on);
-		const end_date = new Date(end_on);
-
-		if (end_date <= start_date) {
+		if (end_on <= start_on) {
 			return res.status(400).json({
 				error: "End Date & Time cannot be before Start Date & Time"
 			});
 		}
 
-		const result = await pool.query(query, values);
+		const result = await pool.query(
+			`
+			INSERT INTO events 
+				(event_name, description, location, start_on, end_on, timezone, status)
+			VALUES (
+				$1, 
+				$2, 
+				$3, 
+				$4::timestamp AT TIME ZONE $6, 
+				$5::timestamp AT TIME ZONE $6, 
+				$6, 
+				$7
+			)
+			RETURNING event_id, event_name, start_on, end_on
+			`
+			, [event_name, description, location, start_on, end_on, timezone, status]
+		);
 
 		res.status(201).json(result.rows[0]);
 
@@ -228,7 +214,7 @@ router.get('/:id/schedule', async (req, res) => {
 				ON s.event_id = e.event_id
 
 			WHERE e.event_id = $1
-			`,[id]
+			`, [id]
 		);
 
 		return res.status(200).json(result.rows);
@@ -303,7 +289,7 @@ router.get('/:id/overview', async (req, res) => {
 				e.status,
 				e.event_name
 			`
-			,[id]
+			, [id]
 		);
 
 		return res.status(200).json(result.rows[0]);
@@ -384,6 +370,9 @@ router.patch('/:id', async (req, res) => {
 		// Keeps track of parameter position ($1, $2, $3...)
 		let index = 1;
 
+		// special index to make sure timezone index is 1
+		let timeZoneIndex = null;
+
 		// Whitelist of fields that are allowed to be updated
 		// Prevents users from modifying protected columns (like event_id, created_at)
 		const allowedFields = [
@@ -392,27 +381,62 @@ router.patch('/:id', async (req, res) => {
 			'location',
 			'start_on',
 			'end_on',
+			'timezone',
 			'status'
 		];
+
+		const eventTimeZone = req.body.timezone;
+
+		// ***SAFETY CHECK*** to ensure timezone is present when updating date/time
+		if ((req.body.start_on !== undefined || req.body.start_on !== undefined)
+			&& (!eventTimeZone)) {
+
+			return res.status(400).json({
+				error: "Must select a timezone when changing start/end time"
+			});
+		}
+
+		// Ensure if there is a timezone it is the first value
+		if (eventTimeZone) {
+			values.push(eventTimeZone);
+			timeZoneIndex = index;
+			index++;
+		}
+
 
 		// Loop through keys sent in request body
 		// Example req.body:
 		// { "location": "Seoul", "status": "In-Progress" }
 		Object.keys(req.body).forEach(field => {
 
-			// Only allow updates for whitelisted fields
-			if (allowedFields.includes(field)) {
-
-				// Build dynamic SQL piece
-				// Example: "location = $1"
-				fields.push(`${field} = $${index}`);
-
-				// Push actual value for that field
-				values.push(req.body[field]);
-
-				// Move to next parameter index
-				index++;
+			if (!allowedFields.includes(field)) {
+				return;
 			}
+
+			// Add timezone
+			if (field === "timezone") {
+				fields.push(`${field} = $${timeZoneIndex}`);
+				return;
+			}
+
+			// Covert datetime to TIMESTAMPTZ before query
+			if (field === "start_on" || field === "end_on") {
+				fields.push(`${field} = $${index}::timestamp AT TIME ZONE $${timeZoneIndex}`);
+				values.push(req.body[field]);
+				index++;
+				return;
+			}
+
+			// Build dynamic SQL piece
+			// Example: "location = $1"
+			fields.push(`${field} = $${index}`);
+
+			// Push actual value for that field
+			values.push(req.body[field]);
+
+			// Move to next parameter index
+			index++;
+
 		});
 
 		// If no valid fields were provided, reject request

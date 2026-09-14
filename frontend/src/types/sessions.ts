@@ -3,19 +3,21 @@ export type SessionSummary = {
 	event_id: number,
 	scheduled_start: string,
 	scheduled_end: string,
+	actual_start: string,
+	actual_end: string,
+	timezone: string,
 	session_type: string,
 	status: string
 };
 
-export type SessionOverviewType = {
-	event_id: number,
+export type SessionOverview = {
 	event_name: string,
-	session_count: number,
-	team_count: number,
-	completed_session_count: number,
-	ongoing_session_count: number,
-	upcoming_session_count: number,
-	status: string
+	team_1: number,
+	manager_1: number,
+	player_count_1: number,
+	team_2: number,
+	manager_2: number,
+	player_count_2: number,
 };
 
 export type SessionCardProp = {

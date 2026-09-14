@@ -9,6 +9,7 @@ CREATE TYPE session_type_enum AS ENUM (
     'Qualifier',
     'Group Stage',
     'Round of 16',
+	'Round of 8',
     'Quarter-Finals',
     'Semi-Final',
     'Third Place Match',

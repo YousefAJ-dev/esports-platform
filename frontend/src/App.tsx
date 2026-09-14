@@ -8,10 +8,12 @@ import DashboardPage from './pages/DashboardPage';
 
 import EventsPage from './pages/events/EventsPage';
 import EventDetailsPage from './pages/events/EventDetailsPage';
-import EventDetailsEdit from './pages/events/EditEventDetails';
+import EditEventDetails from './pages/events/EditEventDetails';
 
 import SessionsPage from './pages/sessions/SessionsPage';
 import SessionDetailsPage from './pages/sessions/SessionDetailsPage';
+import EditSessionDetails from './pages/sessions/EditSessionDetails';
+
 
 import TeamsPage from './pages/TeamsPage';
 import MembersPage from './pages/MembersPage';
@@ -28,12 +30,14 @@ function App() {
 
 				<Route path="events" element={<EventsPage />} />
 				<Route path="events/:id" element={< EventDetailsPage />} />
-				<Route path="events/:id/edit" element={<EventDetailsEdit />}/>
+				<Route path="events/:id/edit" element={<EditEventDetails />}/>
 
 
 				<Route path="sessions" element={<SessionsPage />} />
 				<Route path="sessions/:id" element={<SessionDetailsPage/>}/>
-
+				<Route path="sessions/:id/edit" element={<EditSessionDetails/>}/>
+				
+				
 				<Route path="teams" element={<TeamsPage />} />
 				<Route path="members" element={< MembersPage />} />
 				<Route path="users" element={< UsersPage />} />
