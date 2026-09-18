@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getEvents } from "../../api/eventsApi";
 import type { EventSummary } from "../../types/events";
 import EventCard from "../../components/ui/EventCards";
+import { Link } from "react-router";
 
 function EventsPage() {
 	const [events, setEvents] = useState<EventSummary[]>([]);
@@ -73,6 +74,15 @@ function EventsPage() {
 					<p className="mt-1 text-3xl font-bold text-white">
 						{events.length}
 					</p>
+				</div>
+
+				<div className="flex justify-end">
+					<Link 
+					to={ `/events/new` }
+					className="green-btn green-btn-clickable"
+					>
+						Add New
+					</Link>
 				</div>
 
 				{/* Events Grid */}

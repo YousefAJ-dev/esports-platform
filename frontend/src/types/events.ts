@@ -22,6 +22,8 @@ export type EventOverview = {
 
 export type UpdateEventPayload = Partial<EventSummary>;
 
+export type CreateEventPayload = Omit<EventSummary, "event_id">;
+
 export type EventCardProp = {
 	event: EventSummary;
 };

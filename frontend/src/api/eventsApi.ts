@@ -1,5 +1,5 @@
 import { apiRequest } from "./apiClient";
-import type { EventOverview, EventSummary, UpdateEventPayload } from "../types/events";
+import type { CreateEventPayload, EventOverview, EventSummary, UpdateEventPayload } from "../types/events";
 
 
 /* Typescript Template
@@ -22,10 +22,16 @@ export function getEventOverview(id:string | undefined):Promise<EventOverview> {
 }
 
 
-
 export function updateEventByID(id:string | undefined, updatedEvent: UpdateEventPayload):Promise<EventSummary> {
 	return apiRequest<EventSummary>(`/events/${id}`,{
 		method: "PATCH", // tells fetch to Patch
 		body: JSON.stringify(updatedEvent), // turns Javascript to JSON
+	});
+}
+
+export function createEvent(eventData: CreateEventPayload):Promise<EventSummary> {
+	return apiRequest<EventSummary>(`/events`,{
+		method: "POST",
+		body: JSON.stringify(eventData),
 	});
 }

@@ -24,13 +24,17 @@ export function convertDate(d:string){
 	return date;
 }
 
-export function inputChangeHandler<T extends object>( e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>, setFormData: React.Dispatch<React.SetStateAction<T | null>> ){
+export function inputChangeHandler<T>( 
+	e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>, setFormData: React.Dispatch<React.SetStateAction<T>> 
+){
 
 	const { name, value } = e.target;
 
 	setFormData( (currentData) => {
 
-		if (!currentData){ return currentData };
+		if (currentData === null || typeof currentData !== "object"){ 
+			return currentData 
+		};
 
 		return {
 			...currentData,
