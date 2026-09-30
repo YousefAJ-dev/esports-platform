@@ -14,6 +14,7 @@ import EventCreatePage from './pages/events/CreateEventPage';
 import SessionsPage from './pages/sessions/SessionsPage';
 import SessionDetailsPage from './pages/sessions/SessionDetailsPage';
 import EditSessionDetails from './pages/sessions/EditSessionDetails';
+import SessionCreate from './pages/sessions/CreateSessionPage';
 
 
 import TeamsPage from './pages/TeamsPage';
@@ -37,7 +38,7 @@ function App() {
 				<Route path="sessions" element={<SessionsPage />} />
 				<Route path="sessions/:id" element={<SessionDetailsPage/>}/>
 				<Route path="sessions/:id/edit" element={<EditSessionDetails/>}/>
-				
+				<Route path='sessions/new' element={<SessionCreate/>}/>
 				
 				<Route path="teams" element={<TeamsPage />} />
 				<Route path="members" element={< MembersPage />} />

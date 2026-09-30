@@ -3,11 +3,24 @@ export type SessionSummary = {
 	event_id: number,
 	scheduled_start: string,
 	scheduled_end: string,
-	actual_start: string,
-	actual_end: string,
+	actual_start?: string,
+	actual_end?: string,
 	timezone: string,
 	session_type: string,
 	status: string
+};
+
+export type UpdateSessionPayload = Partial<SessionSummary>;
+
+export type CreateSessionPayload = {
+	event_id: number | null,
+	scheduled_start: string,
+	scheduled_end: string,
+	actual_start?: string,
+	actual_end?: string,
+	timezone: string,
+	session_type: string,
+	status: string,
 };
 
 export type SessionOverview = {

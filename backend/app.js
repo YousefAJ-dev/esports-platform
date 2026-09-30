@@ -1,6 +1,6 @@
 const express = require('express') // Require express lib
 const app = express() // set up variable to call server start
-const cors = require('cors')
+//const cors = require('cors')
 
 const dbCheck = require('./routes/dbHealth.routes')
 const eventsRoutes = require('./routes/events.routes');
@@ -16,11 +16,11 @@ const userRolesRoutes = require('./routes/user_roles.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 
 
-// allows React frontend to call express API during dev
+/* allows React frontend to call express API during dev
 app.use(cors({
 	origin: 'http://localhost:5173'
 }));
-
+*/
 
 // Global Middleware
 // 				runs BEFORE route logic (.use)

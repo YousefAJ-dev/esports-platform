@@ -3,9 +3,9 @@ const router = express.Router();
 
 
 
-router.get('/db-health', (req, res) => {
+router.get('/health', (req, res) => {
 
-	console.log("Server is up and running!");
+	res.json( {status: "We are live!"})
 	
 });
 

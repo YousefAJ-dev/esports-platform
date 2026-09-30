@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { convertDateToInput, inputChangeHandler } from "../../helper/helperFunctions";
 import type { SessionSummary } from "../../types/sessions";
-import { getSessionByID } from "../../api/sessionsApi";
+import { getSessionByID, updateSessionByID } from "../../api/sessionsApi";
 
 export function EditSessionDetails() {
 
@@ -11,6 +11,9 @@ export function EditSessionDetails() {
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 
 	const { id } = useParams();
+	const navigate = useNavigate();
+	const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+	
 
 	const matchOptions = [
 		'Qualifier',
@@ -39,12 +42,13 @@ export function EditSessionDetails() {
 			try {
 
 				const data = await getSessionByID(id);
+				console.log(data);
 				setFormData({
 					...data,
 					scheduled_start: convertDateToInput(data.scheduled_start),
 					scheduled_end: convertDateToInput(data.scheduled_end),
-					actual_start: data.actual_start ? convertDateToInput(data.actual_start) : "",
-					actual_end: data.actual_end ? convertDateToInput(data.actual_end) : "",
+					actual_start: data.actual_start ? convertDateToInput(data.actual_start) : undefined,
+					actual_end: data.actual_end ? convertDateToInput(data.actual_end) : undefined,
 				});
 
 			} catch {
@@ -78,7 +82,20 @@ export function EditSessionDetails() {
 		inputChangeHandler(e, setFormData)
 	};
 
-	
+	const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+		e.preventDefault();
+
+		if (!id){
+			return <p>No ID Found</p>;
+		}
+
+		try {
+			await updateSessionByID(id, formData);
+			navigate(`/sessions`);
+		} catch (error) {
+			
+		}
+	}
 
 	return (
 		<section className="flex flex-col gap-4" >
@@ -91,13 +108,16 @@ export function EditSessionDetails() {
 			</div>
 
 			{/* Edit Form */}
-			<form className="mt-10 stat-card">
+			<form 
+			onSubmit={handleSubmit}
+			className="mt-10 stat-card"
+			>
 
 				<div className="mt-7 grid grid-cols-[160px_1fr] gap-x-4 gap-y-5 items-center">
 
 					{/* Session Type */}
 					<label htmlFor="session_type" className="text-lg mb-2">
-						Match Options:
+						Match Type:
 					</label>
 					<select
 						id="session_type"
@@ -108,7 +128,7 @@ export function EditSessionDetails() {
 					>
 						<option value="">Select an Option</option>
 						{matchOptions.map((type) => (
-							<option id={type} value={type}>{type}</option>
+							<option key={type} id={type} value={type}>{type}</option>
 						))}
 					</select>
 
@@ -170,8 +190,9 @@ export function EditSessionDetails() {
 						name="timezone" 
 						id="timezone"
 						className="purple-input-box"
-						value={formData.timezone ?? 'America/Chicago'}
+						value={formData.timezone ?? browserTimeZone}
 						required
+						onChange={handleInputChange}
 					>
 						<option value="">Select Timezone</option>
 						{timeZones.map( timezone => (
@@ -190,6 +211,7 @@ export function EditSessionDetails() {
 					id="status"
 					value={formData.status}
 					className="purple-input-box"
+					onChange={handleInputChange}
 					required
 					>
 						<option value="">Select an option</option>

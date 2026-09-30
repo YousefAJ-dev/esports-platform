@@ -3,6 +3,7 @@ require('dotenv').config();
 const pool = require('./db/pool'); // this triggers db code
 const app = require('./app'); // importing app.js
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '127.0.0.1';
 
 
 // Immediately Invoked Async Function Expression (Async IIFE)
@@ -36,7 +37,7 @@ const PORT = process.env.PORT || 3000;
 		//
 		// This prevents the API from running
 		// while the database is unreachable
-		app.listen(PORT, () => {
+		app.listen(PORT, HOST, () => {
 			console.log(`Server running on port ${PORT}`);
 		});
 

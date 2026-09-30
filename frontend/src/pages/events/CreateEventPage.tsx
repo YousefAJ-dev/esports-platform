@@ -77,7 +77,7 @@ export function EventCreatePage(){
 							id="description"
 							type="text"
 							name="description"
-							value={formData.description ?? ''}
+							value={formData.description ?? ""}
 							onChange={handleInputChange}
 							className="purple-input-box"
 						/>

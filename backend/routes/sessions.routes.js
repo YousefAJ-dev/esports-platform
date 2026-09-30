@@ -14,7 +14,9 @@ router.post('/', async (req, res) => {
 			'session_type',
 			'scheduled_start',
 			'scheduled_end',
+			'timezone',
 		];
+
 
 		// VALIDATON:
 		// 1. Check if missing 
@@ -27,7 +29,7 @@ router.post('/', async (req, res) => {
 			});
 		}
 
-		const { event_id, session_type, scheduled_start, scheduled_end, actual_start, actual_end, status } = req.body;
+		const { event_id, session_type, scheduled_start, scheduled_end, actual_start, actual_end, timezone, status } = req.body;
 
 		// eventID FK check
 		const eventCheck = await pool.query(
@@ -65,13 +67,33 @@ router.post('/', async (req, res) => {
 
 		const result = await pool.query(
 			`
-			INSERT INTO sessions ( event_id, session_type, scheduled_start, scheduled_end, 
-			actual_start, actual_end, session_type, status)
-			VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-			RETURNING session_id, session_type, scheduled_start, scheduled_end, session_type, status;
+			INSERT INTO sessions ( 
+			event_id, 
+			session_type, 
+			scheduled_start, 
+			scheduled_end, 
+			actual_start, 
+			actual_end, 
+			session_type, 
+			timezone, 
+			status
+			)
+			VALUES (
+			$1,
+			$2,
+			$3::timestamp AT TIME ZONE $8,
+			$4::timestamp AT TIME ZONE $8,
+			$5,
+			$6,
+			$7,
+			$8,
+			$9
+			)
+			RETURNING session_id, session_type, scheduled_start, scheduled_end, session_type, timezone, status;
 			`
 			, [event_id, session_type, scheduled_start, scheduled_end,
-				actual_start ?? null, actual_end ?? null, session_type, status ?? "Upcoming"]
+				actual_start ?? null, actual_end ?? null, session_type, 
+				timezone, status ?? "Upcoming"]
 		);
 
 		return res.status(201).json(result.rows[0]);
@@ -135,7 +157,7 @@ router.get('/:id', async (req, res) => {
 
 		const result = await pool.query(
 			`
-			SELECT session_id, event_id, session_type, scheduled_start, scheduled_end, actual_start, actual_end, session_type, status
+			SELECT session_id, event_id, session_type, scheduled_start, scheduled_end, actual_start, actual_end, session_type, timezone, status
 			FROM sessions
 			WHERE session_id = $1
 			`, [id]
@@ -317,20 +339,50 @@ router.patch('/:id', async (req, res) => {
 			'actual_start',
 			'actual_end',
 			'session_type',
+			'timezone',
 			'status'
 		];
 
 		let values = [];
 		let fields = [];
-		let index = 1;
+		let index = 2;
+		let timeZoneIndex = 1;
+
+		let timezone  = req.body.timezone; 
+
+		if (timezone === undefined) {
+			console.log("Reverting to Browser Timezone");
+			timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+		}
+		
+		values.push(timezone);
 
 		Object.keys(req.body).forEach(field => {
-			if (allowedFields.includes(field)) {
-				fields.push(`${field} = $${index}`);
+			
+			if (!allowedFields.includes(field)){
+				return;
+			}
+
+			if (field === 'timezone'){
+				fields.push(`${field} = $${timeZoneIndex}`);
+				return;
+			}
+
+			if (field === 'scheduled_start' || field === 'scheduled_end' || 
+				(field === 'actual_start' && req.body.actual_start !== undefined) || 
+				(field === 'actual_end' && req.body.actual_end !== undefined)){
+				fields.push(`${field} = $${index}::timestamp AT TIME ZONE $${timeZoneIndex}`);
 				values.push(req.body[field]);
 				index++;
+				return;
 			}
+
+			fields.push(`${field} = $${index}`);
+			values.push(req.body[field]);
+			index++;
+
 		});
+
 
 		if (fields.length === 0) {
 			return res.status(400).json({
@@ -345,7 +397,7 @@ router.patch('/:id', async (req, res) => {
 		UPDATE sessions
 		SET ${fields.join(', ')}
 		WHERE session_id = $${index}
-		RETURNING session_id, event_id, session_type, scheduled_start, scheduled_end, actual_start, actual_end, session_type, status
+		RETURNING session_id, event_id, session_type, scheduled_start, scheduled_end, actual_start, actual_end, session_type, timezone, status
 		`;
 
 		const result = await pool.query(query, values);

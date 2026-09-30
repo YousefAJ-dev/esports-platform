@@ -59,6 +59,7 @@ function SessionsPage (){
 	return(
 		<section className="main-content-layout">
 			<div className="mx-auto max-w-7xl space-y-8">
+
 				{/* Header */}
 				<div className="header-box">
 					<p className="text-sm font-medium text-purple-300">
@@ -71,6 +72,8 @@ function SessionsPage (){
 						An overview of sessions that belong to this platform
 					</p>
 				</div>
+
+
 				{/* Summary Bar */}
 				<div className="stat-card">
 					<p className="stat-title">
@@ -80,6 +83,16 @@ function SessionsPage (){
 						{sessions.length}
 					</p>
 				</div>
+
+				<div className="flex justify-end">
+					<Link 
+					to={ `/sessions/new` }
+					className="green-btn green-btn-clickable"
+					>
+						Add New
+					</Link>
+				</div>
+
 				{/* Match Details */}
 				{sessions.length === 0 ? (
 						<div className="rounded-xl border border-slate-800 bg-slate-900 p-6 text-slate-400">
