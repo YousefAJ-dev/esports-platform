@@ -33,6 +33,12 @@ const HOST = process.env.HOST || '127.0.0.1';
 		// - Postgres accepted the query
 		console.log('Database connected at:', result.rows[0].now);
 
+
+		app.get('/api/health', (_, res) => {
+			res.json( {status: "We are live!"})
+		});
+
+
 		// Only AFTER DB connection is confirmed
 		// do we start accepting HTTP requests
 		//
