@@ -2,6 +2,7 @@ const express = require('express') // Require express lib
 const app = express() // set up variable to call server start
 //const cors = require('cors')
 
+const healthRoutes = require('./routes/health.routes')
 const dbCheck = require('./routes/dbHealth.routes')
 const eventsRoutes = require('./routes/events.routes');
 const sessionsRoutes = require('./routes/sessions.routes');
@@ -50,7 +51,8 @@ app.use((req, res, next) => {
 	next();
 });
 
-
+app.use('/api/health', healthRoutes);
+app.use('/api/dbCheck', dbCheck);
 app.use('/api/events', eventsRoutes);
 app.use('/api/sessions', sessionsRoutes);
 app.use('/api/teams', teamsRoutes);
