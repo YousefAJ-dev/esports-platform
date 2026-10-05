@@ -20,8 +20,6 @@ export function EventCreatePage(){
 		status: "Upcoming",
 	});
 
-	const [ errorMsg, setErrorMsg ] = useState<string | null>(null);
-
 	const timeZones = Intl.supportedValuesOf("timeZone");
 
 	const handleInputChange = (e:React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -39,8 +37,6 @@ export function EventCreatePage(){
 		}
 		
 	};
-
-
 
 	return(
 		<div className="min-h-screen p-6">

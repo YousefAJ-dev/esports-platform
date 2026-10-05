@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { convertDate, convertTime } from "../../helper/helperFunctions";
+import { convertDate } from "../../helper/helperFunctions";
 import type { SessionCardProp } from "../../types/sessions";
 
 export function SessionCard( {session} : SessionCardProp ){

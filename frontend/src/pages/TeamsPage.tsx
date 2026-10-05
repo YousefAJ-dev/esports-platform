@@ -15,13 +15,21 @@ function TeamsPage (){
 				const data = await getTeams();
 				setTeams(data);
 			} catch {
-				setErrorMsg("Failed to Fetch Session Data")
+				setErrorMsg("Failed to Fetch Team Data")
 			} finally {
 				setIsLoading(false);
 			}
 		}
 		loadSessionData();
 	}, []);
+
+	if (isLoading){
+		<p>Page Loading...</p>
+	}
+	
+	if (!teams){
+		<p>{errorMsg}</p>
+	}
 
 	const TeamsList = teams.map(team => (
 		<TeamCard 

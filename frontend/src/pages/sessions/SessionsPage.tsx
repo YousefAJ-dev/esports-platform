@@ -2,13 +2,11 @@ import { useEffect, useState } from "react";
 import type { SessionSummary } from "../../types/sessions";
 import { SessionCard } from "../../components/ui/SessionCard"
 import { getSessions } from "../../api/sessionsApi";
-import { Link, useParams } from "react-router";
+import { Link } from "react-router";
 
 function SessionsPage (){
 
 	const [ sessions, setSessions ] = useState<SessionSummary[]>([]);
-	//const [ sessionOverview, setSessionOverview ] = useState<>();
-
 	const [ errorMsg, setErrorMsg ] = useState<null | string>(null);
 	const [ isLoading, setIsLoading ] = useState(true);
 
@@ -99,12 +97,12 @@ function SessionsPage (){
 							No matches found.
 						</div>
 					) : (
-						<div 
-							className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
-						>
-							{sessionsList}
-						</div>
-					)}
+				<div 
+					className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+				>
+					{sessionsList}
+				</div>
+				)}
 			</div>
 		</section>
 	);

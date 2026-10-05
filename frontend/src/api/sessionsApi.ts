@@ -1,7 +1,5 @@
-import type { SetStateAction } from "react";
 import type { CreateSessionPayload, SessionOverview, SessionSummary, UpdateSessionPayload } from "../types/sessions";
 import { apiRequest } from "./apiClient";
-import type { EventSummary } from "../types/events";
 
 export function getSessions(): Promise<SessionSummary[]> {
 	return apiRequest<SessionSummary[]>('/sessions');

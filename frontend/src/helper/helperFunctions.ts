@@ -1,10 +1,12 @@
 import type React from "react";
 
+/*
 type loadAPIData = {
 	getData: Object,
 	setError: string,
 	setIsLoading: boolean
 };
+*/
 
 export function convertTime(t:string){
 	const time = new Date(t).toLocaleTimeString([], {
