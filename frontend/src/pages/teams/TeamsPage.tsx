@@ -13,33 +13,52 @@ function TeamsPage() {
 	}
 
 	return (
-		<div className="main-content-layout">
+		<section className="main-content-layout">
 			<div className="mx-auto max-w-7xl space-y-8">
 
 				{/* Header */}
 				<div className="header-box">
-					<p className="text-sm font-medium text-purple-300">Teams</p>
-					<h1 className="header-text">Teams</h1>
-					<p className="mt-2 text-slate-400">An overview of the teams that belong to this platform</p>
+					<p className="text-sm font-medium text-purple-300">
+						Teams
+					</p>
+
+					<h1 className="header-text">
+						Platform Teams
+					</h1>
+
+					<p className="mt-2 text-slate-400">
+						An overview of the teams that belong to this platform.
+					</p>
 				</div>
 
-				<div className="flex items-center justify-between">
-					<div className="stat-card">
-						<p className="light-text">Total Teams</p>
-						<p className="value-text">{teams.length}</p>
-					</div>
-					<Link to="/teams/new" className="green-btn green-btn-clickable">Add New</Link>
+				{/* Summary Bar */}
+				<div className="stat-card">
+					<p className="stat-title">Total Teams</p>
+					<p className="mt-1 text-3xl font-bold text-white">
+						{teams.length}
+					</p>
 				</div>
 
-				{teams.length === 0 ? (
-					<div className="stat-card">No teams found.</div>
-				) : (
-					<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-						{teams.map(team => <TeamCard key={team.team_id} team={team} />)}
-					</div>
-				)}
+				<div className="flex justify-end">
+					<Link to="/teams/new" className="green-btn green-btn-clickable">
+						Add New
+					</Link>
+				</div>
+
+				{/* Teams Grid */}
+				<main>
+					{teams.length === 0 ? (
+						<div className="rounded-xl border border-slate-800 bg-slate-900 p-6 text-slate-400">
+							No teams found.
+						</div>
+					) : (
+						<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+							{teams.map(team => <TeamCard key={team.team_id} team={team} />)}
+						</div>
+					)}
+				</main>
 			</div>
-		</div>
+		</section>
 	);
 }
 

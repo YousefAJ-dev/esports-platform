@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { deleteTeamByID, getTeamOverview, getTeamRoster } from "../../api/teamsApi";
-import StatCard from "../../components/ui/StatCard";
+import DetailCard from "../../components/ui/DetailCard";
 import StatusMessage from "../../components/ui/StatusMessage";
 import { convertDate } from "../../helper/helperFunctions";
 import { useAsyncData } from "../../hooks/useAsyncData";
@@ -65,16 +65,16 @@ export function TeamDetailsPage() {
 				<section>
 					<h2 className="mb-4 text-2xl font-semibold text-white">Team Overview</h2>
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-						<StatCard title="Contact Email" value={overview.contact_email} />
-						<StatCard title="Team Activity" value={overview.is_active} />
-						<StatCard title="Managed By" value={overview.user_realname} />
-						<StatCard title="Team Captain" value={captain} />
-						<StatCard title="Active Players" value={overview.active_player_count} />
-						<StatCard title="Events Participated" value={overview.total_events_participated} />
-						<StatCard title="Total Matches" value={overview.total_matches} />
-						<StatCard title="Matches Played" value={overview.matches_played} />
-						<StatCard title="Matches In Progress" value={overview.matches_in_progress} />
-						<StatCard title="Upcoming Matches" value={overview.upcoming_matches} />
+						<DetailCard title="Contact Email" value={overview.contact_email} />
+						<DetailCard title="Team Activity" value={overview.is_active} highlight />
+						<DetailCard title="Managed By" value={overview.user_realname} />
+						<DetailCard title="Team Captain" value={captain} />
+						<DetailCard title="Active Players" value={overview.active_player_count} />
+						<DetailCard title="Events Participated" value={overview.total_events_participated} />
+						<DetailCard title="Total Matches" value={overview.total_matches} />
+						<DetailCard title="Matches Played" value={overview.matches_played} />
+						<DetailCard title="Matches In Progress" value={overview.matches_in_progress} />
+						<DetailCard title="Upcoming Matches" value={overview.upcoming_matches} />
 					</div>
 				</section>
 
@@ -87,9 +87,9 @@ export function TeamDetailsPage() {
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 							{roster.map(player => (
 								<div key={player.display_name} className="stat-card">
+									<p className="light-text">{player.team_position}</p>
 									<p className="value-text">{player.display_name}</p>
-									<p className="light-text">{player.real_name}</p>
-									<p>{player.team_position} · since {convertDate(player.start_date)}</p>
+									<p className="mt-1 text-slate-400">{player.real_name} · since {convertDate(player.start_date)}</p>
 								</div>
 							))}
 						</div>

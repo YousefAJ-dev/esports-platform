@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { deleteUserByID, getUserOverview } from "../../api/usersApi";
-import StatCard from "../../components/ui/StatCard";
+import DetailCard from "../../components/ui/DetailCard";
 import StatusMessage from "../../components/ui/StatusMessage";
 import { useAsyncData } from "../../hooks/useAsyncData";
 
@@ -49,14 +49,19 @@ export function UserDetailsPage() {
 				{actionError && <div className="stat-card">{actionError}</div>}
 
 				{/* User Overview */}
-				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-					<StatCard title="Real Name" value={user.real_name} />
-					<StatCard title="Username" value={user.username} />
-					<StatCard title="Role" value={user.role_name} />
-					<StatCard title="Email" value={user.email} />
-					<StatCard title="Manager Of" value={user.manager_of} />
-					<StatCard title="User Activity" value={user.is_active} />
-				</div>
+				<section>
+					<h2 className="mb-4 text-2xl font-semibold text-white">
+						User Overview
+					</h2>
+					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+						<DetailCard title="Real Name" value={user.real_name} />
+						<DetailCard title="Username" value={user.username} />
+						<DetailCard title="Role" value={user.role_name} />
+						<DetailCard title="Email" value={user.email} />
+						<DetailCard title="Manager Of" value={user.manager_of} />
+						<DetailCard title="User Activity" value={user.is_active} highlight />
+					</div>
+				</section>
 			</div>
 		</div>
 	);
