@@ -17,9 +17,20 @@ import EditSessionDetails from './pages/sessions/EditSessionDetails';
 import SessionCreate from './pages/sessions/CreateSessionPage';
 
 
-import TeamsPage from './pages/TeamsPage';
-import MembersPage from './pages/MembersPage';
-import UsersPage from './pages/UsersPage';
+import TeamsPage from './pages/teams/TeamsPage';
+import TeamDetailsPage from './pages/teams/TeamDetailsPage';
+import EditTeamDetails from './pages/teams/EditTeamDetails';
+import CreateTeamPage from './pages/teams/CreateTeamPage';
+
+import MembersPage from './pages/members/MembersPage';
+import MemberDetailsPage from './pages/members/MemberDetailsPage';
+import EditMemberDetails from './pages/members/EditMemberDetails';
+import CreateMemberPage from './pages/members/CreateMemberPage';
+
+import UsersPage from './pages/users/UsersPage';
+import UserDetailsPage from './pages/users/UserDetailsPage';
+import EditUserDetails from './pages/users/EditUserDetails';
+import CreateUserPage from './pages/users/CreateUserPage';
 
 function App() {
 
@@ -41,8 +52,19 @@ function App() {
 				<Route path='sessions/new' element={<SessionCreate/>}/>
 				
 				<Route path="teams" element={<TeamsPage />} />
-				<Route path="members" element={< MembersPage />} />
-				<Route path="users" element={< UsersPage />} />
+				<Route path="teams/:id" element={<TeamDetailsPage />} />
+				<Route path="teams/:id/edit" element={<EditTeamDetails />} />
+				<Route path="teams/new" element={<CreateTeamPage />} />
+
+				<Route path="members" element={<MembersPage />} />
+				<Route path="members/:id" element={<MemberDetailsPage />} />
+				<Route path="members/:id/edit" element={<EditMemberDetails />} />
+				<Route path="members/new" element={<CreateMemberPage />} />
+
+				<Route path="users" element={<UsersPage />} />
+				<Route path="users/:id" element={<UserDetailsPage />} />
+				<Route path="users/:id/edit" element={<EditUserDetails />} />
+				<Route path="users/new" element={<CreateUserPage />} />
 
 			</Route>
 		</Routes>

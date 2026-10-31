@@ -1,4 +1,7 @@
-const { Pool } = require('pg');
+const { Pool, types } = require('pg');
+
+// Return DATE columns (OID 1082) as 'YYYY-MM-DD' strings to avoid timezone day-shifts
+types.setTypeParser(1082, value => value);
 
 const pool = new Pool({
 	host: process.env.DB_HOST,

@@ -252,7 +252,7 @@ router.patch("/:id", async (req, res) => {
 			return res.status(404).json({ error: "Member not Found" });
 		}
 
-		return res.status(201).json(result.rows[0]);
+		return res.status(200).json(result.rows[0]);
 
 	} catch (error) {
 
@@ -288,7 +288,7 @@ router.delete("/:id", async (req, res) => {
 			return res.status(404).json({ error: "Member not found" })
 		}
 
-		return res.status(201).json({
+		return res.status(200).json({
 			message: "Member deleted successfully",
 			member: result.rows[0]
 		});

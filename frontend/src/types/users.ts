@@ -1,10 +1,25 @@
-export type eventsOverview = {
-	event_id: number,
-	event_name: string,
-	session_count: number,
-	team_count: number,
-	completed_session_count: number,
-	ongoing_session_count: number,
-	upcoming_session_count: number,
-	status: string
+export type UserSummary = {
+	user_id: number,
+	first_name: string,
+	last_name: string,
+	username: string,
+	email: string,
+	is_active: boolean
+};
+
+export type UserOverview = {
+	real_name: string,
+	username: string,
+	role_name: string | null,
+	email: string,
+	manager_of: string | null,
+	is_active: boolean
+};
+
+export type UpdateUserPayload = Partial<Omit<UserSummary, "user_id">>;
+// The backend hashes the password, so the client sends it in plain text over the API only on create
+export type CreateUserPayload = Omit<UserSummary, "user_id"> & { password: string };
+
+export type UserCardProp = {
+	user: UserSummary
 };

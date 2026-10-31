@@ -11,7 +11,7 @@ router.post('/', async (req, res) => {
 
 		const requiredFields = [
 			"team_name",
-			"contact_email ",
+			"contact_email",
 		];
 
 		// VALIDATION
@@ -142,7 +142,7 @@ router.get('/:id/members', async (req, res) => {
 			SELECT 
 			t.team_id, 
 			t.team_name,
-			m.member_id
+			m.member_id,
 			m.display_name,
 			tm.team_position
 			FROM team_members tm
@@ -202,12 +202,6 @@ router.get('/:id/roster', async (req, res) => {
 			`
 			, [id]
 		);
-
-		if (result.rows[0].length === 0) {
-			return res.status(404).json({
-				error: `Could not find ID: ${id}`
-			});
-		}
 
 		return res.status(200).json(result.rows);
 
@@ -307,7 +301,7 @@ router.get('/:id/overview', async (req, res) => {
 			, [id]
 		);
 
-		if (result.rows[0].length === 0) {
+		if (result.rows.length === 0) {
 			return res.status(404).json({
 				error: `Could not find ID: ${id}`
 			});
@@ -338,7 +332,7 @@ router.patch('/:id', async (req, res) => {
 			return res.status(400).json({ error: `Invalid Team ID: ${id}` })
 		};
 
-		const allowedFields = ['team_name', 'contact_email ', 'is_active'];
+		const allowedFields = ['team_name', 'contact_email', 'is_active'];
 
 		let fields = []; // SQL field
 

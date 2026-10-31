@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const pool = require('../db/pool');
+const bcrypt = require('bcrypt');
 const { getMissingFields } = require('../utils/validation');
 
 
@@ -13,11 +14,10 @@ router.post('/', async (req, res) => {
 			'last_name',
 			'username',
 			'email',
-			'password_hash',
-			'is_active'
+			'password'
 		];
 
-		const { first_name, last_name, username, email, password_hash, is_active } = req.body;
+		const { first_name, last_name, username, email, password, is_active } = req.body;
 
 		const missingFields = getMissingFields(requiredFields, req.body);
 
@@ -28,13 +28,16 @@ router.post('/', async (req, res) => {
 			});
 		}
 
+		// Never store the plain password
+		const password_hash = await bcrypt.hash(password, 10);
+
 		const result = await pool.query(
 			`
-			INSERT INTO ( first_name, last_name, username, email, password_hash, is_active)
-			VALUES ($1,$2,$3,$4,$5)
-			RETURNING first_name, last_name, username, email, is_active
+			INSERT INTO users (first_name, last_name, username, email, password_hash, is_active)
+			VALUES ($1,$2,$3,$4,$5,$6)
+			RETURNING user_id, first_name, last_name, username, email, is_active
 			`,
-			[first_name, last_name, username, email, password_hash, is_active]
+			[first_name, last_name, username, email, password_hash, is_active ?? true]
 		);
 
 		return res.status(201).json(result.rows[0]);

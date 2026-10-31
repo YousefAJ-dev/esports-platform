@@ -30,7 +30,12 @@ export function inputChangeHandler<T>(
 	e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>, setFormData: React.Dispatch<React.SetStateAction<T>> 
 ){
 
-	const { name, value } = e.target;
+	const { name, value, type } = e.target;
+
+	// Checkboxes store a boolean, everything else stores the string value
+	const newValue = type === "checkbox" && e.target instanceof HTMLInputElement
+		? e.target.checked
+		: value;
 
 	setFormData( (currentData) => {
 
@@ -40,7 +45,7 @@ export function inputChangeHandler<T>(
 
 		return {
 			...currentData,
-			[name]: value
+			[name]: newValue
 		} as T;
 
 	});
@@ -57,4 +62,18 @@ export function convertDateToInput(date:string){
 	const day = String(new Date(date).getDate()).padStart(2, "0");
 
 	return `${year}-${month}-${day}T${hour}:${minute}`;
+}
+
+// Returns only the fields that differ from the original, so PATCH payloads stay minimal. O(k) over keys.
+export function getChangedFields<T extends object>(original: T, current: T): Partial<T> {
+
+	const changes: Partial<T> = {};
+
+	for (const key of Object.keys(current) as (keyof T)[]) {
+		if (current[key] !== original[key]) {
+			changes[key] = current[key];
+		}
+	}
+
+	return changes;
 }

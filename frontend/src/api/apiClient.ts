@@ -26,7 +26,9 @@ export async function apiRequest<T>(
 	// If the backend returns 400, 404, 500, etc.,
 	// throw an error so the page can catch it.
 	if (!response.ok) {
-		throw new Error(`API request failed with status ${response.status}`);
+		// Prefer the backend's error message when it sends one
+		const body = await response.json().catch(() => null);
+		throw new Error(body?.error ?? `API request failed with status ${response.status}`);
 	}
 
 	// Convert the JSON response into the TypeScript type T.

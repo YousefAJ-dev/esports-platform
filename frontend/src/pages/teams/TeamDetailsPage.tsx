@@ -1,0 +1,103 @@
+import { useState } from "react";
+import { Link, useNavigate, useParams } from "react-router";
+import { deleteTeamByID, getTeamOverview, getTeamRoster } from "../../api/teamsApi";
+import StatCard from "../../components/ui/StatCard";
+import StatusMessage from "../../components/ui/StatusMessage";
+import { convertDate } from "../../helper/helperFunctions";
+import { useAsyncData } from "../../hooks/useAsyncData";
+
+export function TeamDetailsPage() {
+
+	const { id } = useParams();
+	const navigate = useNavigate();
+	const [actionError, setActionError] = useState<string | null>(null);
+
+	// Overview and roster are independent, so fetch them in parallel
+	const { data, errorMsg, isLoading } = useAsyncData(
+		async () => {
+			const [overview, roster] = await Promise.all([getTeamOverview(id), getTeamRoster(id)]);
+			return { overview, roster };
+		},
+		"Error fetching team data",
+		id
+	);
+
+	if (isLoading || errorMsg || !data) {
+		return <StatusMessage isLoading={isLoading} errorMsg={errorMsg ?? "Team not found"} loadingText="Loading team..." />;
+	}
+
+	const { overview, roster } = data;
+
+	const handleDelete = async () => {
+		// Deleting is permanent, so confirm first
+		if (!window.confirm(`Delete ${overview.team_name}?`)) return;
+
+		try {
+			await deleteTeamByID(id);
+			navigate("/teams");
+		} catch (error) {
+			setActionError(error instanceof Error ? error.message : "Failed to delete team");
+		}
+	};
+
+	const captain = overview.team_captain_dname
+		? `${overview.team_captain_dname} (${overview.team_captain_rname})`
+		: null;
+
+	return (
+		<div className="min-h-screen bg-slate-950 p-6 text-slate-100">
+			<div className="mx-auto max-w-6xl space-y-8">
+
+				{/* Header */}
+				<div className="header-box">
+					<p className="text-sm font-medium text-purple-300">Team #{id}</p>
+					<h1 className="header-text">{overview.team_name}</h1>
+				</div>
+
+				<div className="flex justify-end gap-4">
+					<Link to={`/teams/${id}/edit`} className="green-btn green-btn-clickable">Edit</Link>
+					<button type="button" onClick={handleDelete} className="green-btn green-btn-clickable">Delete</button>
+				</div>
+
+				{actionError && <div className="stat-card">{actionError}</div>}
+
+				{/* Team Overview */}
+				<section>
+					<h2 className="mb-4 text-2xl font-semibold text-white">Team Overview</h2>
+					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+						<StatCard title="Contact Email" value={overview.contact_email} />
+						<StatCard title="Team Activity" value={overview.is_active} />
+						<StatCard title="Managed By" value={overview.user_realname} />
+						<StatCard title="Team Captain" value={captain} />
+						<StatCard title="Active Players" value={overview.active_player_count} />
+						<StatCard title="Events Participated" value={overview.total_events_participated} />
+						<StatCard title="Total Matches" value={overview.total_matches} />
+						<StatCard title="Matches Played" value={overview.matches_played} />
+						<StatCard title="Matches In Progress" value={overview.matches_in_progress} />
+						<StatCard title="Upcoming Matches" value={overview.upcoming_matches} />
+					</div>
+				</section>
+
+				{/* Roster */}
+				<section>
+					<h2 className="mb-4 text-2xl font-semibold text-white">Current Roster</h2>
+					{roster.length === 0 ? (
+						<div className="stat-card">No players on this team.</div>
+					) : (
+						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+							{roster.map(player => (
+								<div key={player.display_name} className="stat-card">
+									<p className="value-text">{player.display_name}</p>
+									<p className="light-text">{player.real_name}</p>
+									<p>{player.team_position} · since {convertDate(player.start_date)}</p>
+								</div>
+							))}
+						</div>
+					)}
+				</section>
+			</div>
+		</div>
+	);
+}
+
+export default TeamDetailsPage;
