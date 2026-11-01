@@ -227,6 +227,27 @@ async function assertEventFitsMatches(db, eventId) {
 }
 
 
+// An event can only be completed once none of its matches are still waiting to be played
+async function assertEventCanComplete(db, eventId) {
+
+	const result = await db.query(
+		`
+		SELECT COUNT(*)::INT AS pending
+		FROM sessions
+		WHERE event_id = $1
+			AND status IN ('Upcoming', 'In-Progress')
+		`,
+		[eventId]
+	);
+
+	const { pending } = result.rows[0];
+
+	if (pending > 0) {
+		throw new RuleError(400, `${pending} match${pending === 1 ? ' is' : 'es are'} still upcoming or in progress. Complete or cancel ${pending === 1 ? 'it' : 'them'} first`);
+	}
+}
+
+
 // A match can only be completed once both teams have a score (no winner is allowed, for draws)
 async function assertHasResults(db, sessionId) {
 
@@ -370,6 +391,7 @@ module.exports = {
 	assertTeamsCanPlay,
 	assertWithinEvent,
 	assertEventFitsMatches,
+	assertEventCanComplete,
 	assertHasResults,
 	setMatchTeams,
 	assertCanRegister,

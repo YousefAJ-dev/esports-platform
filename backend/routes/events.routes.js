@@ -3,7 +3,7 @@ const router = express.Router();
 const pool = require('../db/pool'); // importing data base
 const { getMissingFields } = require('../utils/validation');
 const { matchListQuery } = require('../utils/matchQueries');
-const { handleRuleError, assertCanRegister, assertCanUnregister, assertEventFitsMatches } = require('../utils/businessRules');
+const { handleRuleError, assertCanRegister, assertCanUnregister, assertEventFitsMatches, assertEventCanComplete } = require('../utils/businessRules');
 
 
 // POST /api/events
@@ -628,6 +628,10 @@ router.patch('/:id', async (req, res) => {
 			}
 
 			await assertEventFitsMatches(client, id);
+
+			if (result.rows[0].status === 'Completed') {
+				await assertEventCanComplete(client, id);
+			}
 
 			await client.query('COMMIT');
 
