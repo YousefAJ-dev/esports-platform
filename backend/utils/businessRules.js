@@ -4,6 +4,7 @@
 const TEAMS_PER_MATCH = 2;
 const TEAM_POSITIONS = ['Player', 'Captain', 'Substitute'];
 const UNIQUE_VIOLATION = '23505';
+const FK_VIOLATION = '23503';
 
 class RuleError extends Error {
 	constructor(status, message) {
@@ -36,6 +37,41 @@ function handleRuleError(error, res) {
 	}
 
 	return null;
+}
+
+
+// Deleting a record that history still points at (rosters, matches, roles) fails on the foreign keys.
+// Turns that into a 409 that points to deactivating instead. Returns null for any other error.
+function handleInUseError(error, res, entity) {
+
+	if (error.code !== FK_VIOLATION) return null;
+
+	return res.status(409).json({
+		error: `This ${entity} has history on the platform and can't be deleted. Deactivate it instead`
+	});
+}
+
+
+// A team can't be deactivated while it still has matches to play
+async function assertCanDeactivateTeam(db, teamId) {
+
+	const result = await db.query(
+		`
+		SELECT COUNT(*)::INT AS pending
+		FROM session_teams st
+		JOIN sessions s
+			ON st.session_id = s.session_id
+		WHERE st.team_id = $1
+			AND s.status IN ('Upcoming', 'In-Progress')
+		`,
+		[teamId]
+	);
+
+	const { pending } = result.rows[0];
+
+	if (pending > 0) {
+		throw new RuleError(409, `Team still has ${pending} upcoming or live match${pending === 1 ? '' : 'es'}. Remove it from ${pending === 1 ? 'that match' : 'those matches'} first`);
+	}
 }
 
 
@@ -327,6 +363,8 @@ async function assertCanJoinTeam(db, teamId, memberId, teamPosition) {
 module.exports = {
 	RuleError,
 	handleRuleError,
+	handleInUseError,
+	assertCanDeactivateTeam,
 	parseMatchTeamIds,
 	assertSessionEditable,
 	assertTeamsCanPlay,

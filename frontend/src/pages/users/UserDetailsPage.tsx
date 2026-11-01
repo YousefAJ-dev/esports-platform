@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
-import { deleteUserByID, getUserOverview } from "../../api/usersApi";
+import { deleteUserByID, getUserOverview, updateUserByID } from "../../api/usersApi";
 import DetailCard from "../../components/ui/DetailCard";
+import FormError from "../../components/ui/FormError";
 import StatusMessage from "../../components/ui/StatusMessage";
 import { useAsyncData } from "../../hooks/useAsyncData";
 
@@ -10,9 +11,11 @@ export function UserDetailsPage() {
 	const { id } = useParams();
 	const navigate = useNavigate();
 	const [actionError, setActionError] = useState<string | null>(null);
+	// Bumped after activating/deactivating so the overview reloads
+	const [version, setVersion] = useState(0);
 
 	const { data: user, errorMsg, isLoading } = useAsyncData(
-		() => getUserOverview(id), "Error fetching user data", id
+		() => getUserOverview(id), "Error fetching user data", `${id}:${version}`
 	);
 
 	if (isLoading || errorMsg || !user) {
@@ -31,6 +34,16 @@ export function UserDetailsPage() {
 		}
 	};
 
+	const handleToggleActive = async () => {
+		try {
+			await updateUserByID(id, { is_active: !user.is_active });
+			setActionError(null);
+			setVersion(v => v + 1);
+		} catch (error) {
+			setActionError(error instanceof Error ? error.message : "Failed to update user");
+		}
+	};
+
 	return (
 		<div>
 			<div className="mx-auto max-w-6xl space-y-8">
@@ -43,10 +56,11 @@ export function UserDetailsPage() {
 
 				<div className="flex justify-end gap-4">
 					<Link to={`/users/${id}/edit`} className="green-btn green-btn-clickable">Edit</Link>
+					<button type="button" onClick={handleToggleActive} className="ghost-btn">{user.is_active ? "Deactivate" : "Reactivate"}</button>
 					<button type="button" onClick={handleDelete} className="red-btn">Delete</button>
 				</div>
 
-				{actionError && <div className="stat-card">{actionError}</div>}
+				<FormError message={actionError} />
 
 				{/* User Overview */}
 				<section>

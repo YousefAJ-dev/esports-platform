@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require("../db/pool");
 const { getMissingFields } = require('../utils/validation');
-const { handleRuleError, assertCanJoinTeam } = require('../utils/businessRules');
+const { handleRuleError, handleInUseError, assertCanJoinTeam, assertCanDeactivateTeam } = require('../utils/businessRules');
 
 
 // POST api/teams
@@ -443,6 +443,10 @@ router.patch('/:id', async (req, res) => {
 			return res.status(400).json({ error: "Invalid Fields Entered" });
 		}
 
+		if (req.body.is_active === false) {
+			await assertCanDeactivateTeam(pool, id);
+		}
+
 		values.push(id);
 
 		const query = `
@@ -461,6 +465,8 @@ router.patch('/:id', async (req, res) => {
 		return res.json(result.rows[0]);
 
 	} catch (error) {
+
+		if (handleRuleError(error, res)) return;
 
 		console.error("Error Patching Teams:", error.message);
 
@@ -500,6 +506,8 @@ router.delete('/:id', async (req, res) => {
 		});
 
 	} catch (error) {
+
+		if (handleInUseError(error, res, "team")) return;
 
 		console.error("Error Deleting Team:", error.message);
 

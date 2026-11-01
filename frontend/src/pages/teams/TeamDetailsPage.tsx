@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
-import { deleteTeamByID, getTeamOverview, getTeamRoster, removeTeamMember } from "../../api/teamsApi";
+import { deleteTeamByID, getTeamOverview, getTeamRoster, removeTeamMember, updateTeamByID } from "../../api/teamsApi";
 import AddPlayerForm from "../../components/ui/AddPlayerForm";
 import DetailCard from "../../components/ui/DetailCard";
 import Breadcrumbs from "../../components/ui/Breadcrumbs";
+import FormError from "../../components/ui/FormError";
 import StatusMessage from "../../components/ui/StatusMessage";
 import { convertDate } from "../../helper/helperFunctions";
 import { useAsyncData } from "../../hooks/useAsyncData";
@@ -49,6 +50,17 @@ export function TeamDetailsPage() {
 		}
 	};
 
+	// The server refuses to deactivate a team that still has matches to play
+	const handleToggleActive = async () => {
+		try {
+			await updateTeamByID(id, { is_active: !overview.is_active });
+			setActionError(null);
+			refreshRoster();
+		} catch (error) {
+			setActionError(error instanceof Error ? error.message : "Failed to update team");
+		}
+	};
+
 	const handleRemovePlayer = async (memberId: number, displayName: string) => {
 		if (!window.confirm(`Remove ${displayName} from ${overview.team_name}?`)) return;
 
@@ -80,10 +92,11 @@ export function TeamDetailsPage() {
 
 				<div className="flex justify-end gap-4">
 					<Link to={`/teams/${id}/edit`} className="green-btn green-btn-clickable">Edit</Link>
+					<button type="button" onClick={handleToggleActive} className="ghost-btn">{overview.is_active ? "Deactivate" : "Reactivate"}</button>
 					<button type="button" onClick={handleDelete} className="red-btn">Delete</button>
 				</div>
 
-				{actionError && <div className="stat-card">{actionError}</div>}
+				<FormError message={actionError} />
 
 				{/* Team Overview */}
 				<section>

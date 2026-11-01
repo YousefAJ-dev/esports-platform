@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const pool = require('../db/pool');
+const { handleInUseError } = require('../utils/businessRules');
 const bcrypt = require('bcrypt');
 const { getMissingFields } = require('../utils/validation');
 
@@ -288,6 +289,8 @@ router.delete('/:id', async (req, res) => {
 		return res.status(200).json(result.rows[0]);
 
 	} catch (error) {
+
+		if (handleInUseError(error, res, "user")) return;
 
 		console.error("Error deleting user: ", error.message);
 

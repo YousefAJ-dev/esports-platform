@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db/pool');
 
 const { getMissingFields } = require('../utils/validation');
+const { handleInUseError } = require('../utils/businessRules');
 
 
 // api/members/ -- post member to members
@@ -287,13 +288,43 @@ router.patch("/:id", async (req, res) => {
 			`
 			;
 
-		const result = await pool.query(query, values);
+		// Deactivating also takes the member off their team, so both changes go in one transaction
+		const client = await pool.connect();
 
-		if (result.rows.length === 0) {
-			return res.status(404).json({ error: "Member not Found" });
+		try {
+
+			await client.query('BEGIN');
+
+			const result = await client.query(query, values);
+
+			if (result.rows.length === 0) {
+				await client.query('ROLLBACK');
+				return res.status(404).json({ error: "Member not Found" });
+			}
+
+			// Inactive members can't be on a roster; ending the membership keeps the history
+			if (req.body.is_active === false) {
+				await client.query(
+					`
+					UPDATE team_members
+					SET end_date = GREATEST(start_date, CURRENT_DATE)
+					WHERE member_id = $1
+						AND end_date IS NULL
+					`,
+					[id]
+				);
+			}
+
+			await client.query('COMMIT');
+
+			return res.status(200).json(result.rows[0]);
+
+		} catch (error) {
+			await client.query('ROLLBACK');
+			throw error;
+		} finally {
+			client.release();
 		}
-
-		return res.status(200).json(result.rows[0]);
 
 	} catch (error) {
 
@@ -335,6 +366,8 @@ router.delete("/:id", async (req, res) => {
 		});
 
 	} catch (error) {
+
+		if (handleInUseError(error, res, "member")) return;
 
 		console.error("Error getting Member:", error.message);
 
