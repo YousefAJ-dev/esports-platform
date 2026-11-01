@@ -6,6 +6,7 @@ import { convertDateToInput, getTimeRangeError, inputChangeHandler } from "../..
 import { useAsyncData } from "../../hooks/useAsyncData";
 import FormError from "../../components/ui/FormError";
 import StatusMessage from "../../components/ui/StatusMessage";
+import CancelButton from "../../components/ui/CancelButton";
 
 type EventEditFormProps = {
 	id: string | undefined,
@@ -52,7 +53,7 @@ function EventEditForm({ id, original }: EventEditFormProps) {
 			className="mt-10 stat-card"
 		>
 
-			<div className="mt-7 grid grid-cols-[160px_1fr] gap-x-4 gap-y-5 items-center">
+			<div className="form-grid">
 
 				{/* Event Name */}
 				<label htmlFor="event_name" className="text-lg mb-2">
@@ -169,8 +170,9 @@ function EventEditForm({ id, original }: EventEditFormProps) {
 
 			<FormError message={timeError ?? submitError} />
 
-			<div>
-				<button type="submit" disabled={timeError !== null} className="green-btn green-btn-clickable mt-10 mb-5 disabled:cursor-not-allowed disabled:opacity-50">Save Changes</button>
+			<div className="mt-10 mb-5 flex items-center gap-4">
+				<button type="submit" disabled={timeError !== null} className="green-btn green-btn-clickable disabled:cursor-not-allowed disabled:opacity-50">Save Changes</button>
+				<CancelButton to={`/events/${id}`} />
 			</div>
 
 		</form>
@@ -193,7 +195,7 @@ export function EventDetailsEdit() {
 		<section className="flex flex-col gap-4" >
 			{/* Header */}
 			<div className="header-box">
-				<h1>Edit Event</h1>
+				<h1 className="header-text">Edit Event</h1>
 				<p className="stat-id">
 					Event #{id}
 				</p>

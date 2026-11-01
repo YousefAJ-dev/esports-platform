@@ -7,6 +7,7 @@ import { getSessionByID, updateSessionByID } from "../../api/sessionsApi";
 import MatchResultsForm from "../../components/ui/MatchResultsForm";
 import MatchTeamsForm from "../../components/ui/MatchTeamsForm";
 import StatusMessage from "../../components/ui/StatusMessage";
+import CancelButton from "../../components/ui/CancelButton";
 
 export function EditSessionDetails() {
 
@@ -62,7 +63,7 @@ export function EditSessionDetails() {
 				});
 
 			} catch {
-				setErrorMsg("Error Fetching Event Data");
+				setErrorMsg("Error fetching match data");
 			} finally {
 				setIsLoading(false);
 			}
@@ -73,7 +74,7 @@ export function EditSessionDetails() {
 	}, [id]);
 
 	if (isLoading || errorMsg || !formData) {
-		return <StatusMessage isLoading={isLoading} errorMsg={errorMsg ?? "Session not found"} loadingText="Loading session..." />;
+		return <StatusMessage isLoading={isLoading} errorMsg={errorMsg ?? "Match not found"} loadingText="Loading match..." />;
 	}
 
 	// Checked on every render so the message shows up as soon as the times are wrong
@@ -99,7 +100,7 @@ export function EditSessionDetails() {
 			});
 			navigate(`/sessions/${id}`);
 		} catch (error) {
-			setSubmitError(error instanceof Error ? error.message : "Error updating session");
+			setSubmitError(error instanceof Error ? error.message : "Error updating match");
 		}
 	}
 
@@ -107,9 +108,9 @@ export function EditSessionDetails() {
 		<section className="flex flex-col gap-4" >
 			{/* Header */}
 			<div className="header-box">
-				<h1>Edit Session</h1>
+				<h1 className="header-text">Edit Match</h1>
 				<p className="stat-id">
-					Session #{id}
+					Match #{id}
 				</p>
 			</div>
 
@@ -119,7 +120,7 @@ export function EditSessionDetails() {
 			className="mt-10 stat-card"
 			>
 
-				<div className="mt-7 grid grid-cols-[160px_1fr] gap-x-4 gap-y-5 items-center">
+				<div className="form-grid">
 
 					{/* Session Type */}
 					<label htmlFor="session_type" className="text-lg mb-2">
@@ -230,8 +231,9 @@ export function EditSessionDetails() {
 
 				<FormError message={timeError ?? submitError} />
 
-				<div>
-					<button type="submit" disabled={timeError !== null} className="green-btn green-btn-clickable mt-10 mb-5 disabled:cursor-not-allowed disabled:opacity-50">Save Changes</button>
+				<div className="mt-10 mb-5 flex items-center gap-4">
+					<button type="submit" disabled={timeError !== null} className="green-btn green-btn-clickable disabled:cursor-not-allowed disabled:opacity-50">Save Changes</button>
+					<CancelButton to={`/sessions/${id}`} />
 				</div>
 			</form>
 

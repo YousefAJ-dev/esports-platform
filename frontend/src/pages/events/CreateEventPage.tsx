@@ -4,6 +4,7 @@ import type { CreateEventPayload } from "../../types/events";
 import { getTimeRangeError, inputChangeHandler } from "../../helper/helperFunctions";
 import FormError from "../../components/ui/FormError";
 import { createEvent } from "../../api/eventsApi";
+import CancelButton from "../../components/ui/CancelButton";
 
 export function EventCreatePage(){
 	
@@ -51,14 +52,14 @@ export function EventCreatePage(){
 			<section className="mx-auto max-w-6xl space-y-8">
 				{/* SECTION HEADER */}
 				<div className="header-box">
-					<h1>Create Event</h1>
+					<h1 className="header-text">Create Event</h1>
 				</div>
 				{/* Event Form*/}
 				<form 
 				onSubmit={handleSubmit}
 				className="stat-card"
 				>
-					<div className="mt-7 grid grid-cols-[160px_1fr] gap-x-4 gap-y-5 items-center">
+					<div className="form-grid">
 						{/* Event Name */}
 						<label htmlFor="event_name" className="text-lg mb-2">
 							Event Name:
@@ -173,8 +174,9 @@ export function EventCreatePage(){
 
 					<FormError message={timeError ?? submitError} />
 
-					<div>
-						<button type="submit" disabled={timeError !== null} className="green-btn green-btn-clickable mt-10 mb-5 disabled:cursor-not-allowed disabled:opacity-50">Save Changes</button>
+					<div className="mt-10 mb-5 flex items-center gap-4">
+						<button type="submit" disabled={timeError !== null} className="green-btn green-btn-clickable disabled:cursor-not-allowed disabled:opacity-50">Save Changes</button>
+						<CancelButton to="/events" />
 					</div>
 				</form>
 			</section>

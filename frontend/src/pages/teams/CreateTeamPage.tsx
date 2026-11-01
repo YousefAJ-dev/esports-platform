@@ -4,6 +4,8 @@ import { createTeam } from "../../api/teamsApi";
 import FormField from "../../components/ui/FormField";
 import { inputChangeHandler } from "../../helper/helperFunctions";
 import type { CreateTeamPayload } from "../../types/teams";
+import CancelButton from "../../components/ui/CancelButton";
+import FormError from "../../components/ui/FormError";
 
 export function CreateTeamPage() {
 
@@ -35,20 +37,21 @@ export function CreateTeamPage() {
 		<div className="min-h-screen p-6">
 			<section className="mx-auto max-w-6xl space-y-8">
 				<div className="header-box">
-					<h1>Create Team</h1>
+					<h1 className="header-text">Create Team</h1>
 				</div>
 
 				<form onSubmit={handleSubmit} className="stat-card">
-					<div className="mt-7 grid grid-cols-[160px_1fr] gap-x-4 gap-y-5 items-center">
+					<div className="form-grid">
 						<FormField label="Team Name:" name="team_name" type="text" value={formData.team_name} onChange={handleInputChange} required />
 						<FormField label="Contact Email:" name="contact_email" type="email" value={formData.contact_email} onChange={handleInputChange} required />
 						<FormField label="Active:" name="is_active" type="checkbox" checked={formData.is_active} onChange={handleInputChange} className="h-5 w-5" />
 					</div>
 
-					{errorMsg && <p className="mt-5 text-red-400">{errorMsg}</p>}
+					<FormError message={errorMsg} />
 
-					<div>
-						<button type="submit" className="green-btn green-btn-clickable mt-10 mb-5">Create Team</button>
+					<div className="mt-10 mb-5 flex items-center gap-4">
+						<button type="submit" className="green-btn green-btn-clickable">Create Team</button>
+						<CancelButton to="/teams" />
 					</div>
 				</form>
 			</section>

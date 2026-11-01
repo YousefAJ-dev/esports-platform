@@ -1,57 +1,27 @@
-import { useEffect, useState } from "react";
 import StatCard from "../components/ui/StatCard";
-import type { DashboardSummary } from "../types/dashboard";
 import { getDashboard } from "../api/dashboardApi";
+import StatusMessage from "../components/ui/StatusMessage";
+import { useAsyncData } from "../hooks/useAsyncData";
 
 
 function DashboardPage() {
 
-	const [dashboard, setDashboard] = useState<DashboardSummary | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null)
+	const { data: dashboard, errorMsg, isLoading } = useAsyncData(getDashboard, "Failed to load dashboard data", "dashboard");
 
-	useEffect(() => {
-		async function loadDashboard() {
-			try {
-
-				const data = await getDashboard();
-				console.log(data);
-				setDashboard(data);
-
-			} catch {
-
-				setError('Failed to load dashboard data');
-
-			} finally {
-				setIsLoading(false)
-			}
-		}
-
-		loadDashboard();
-	}, []);
-
-	if (isLoading) {
-		return <p>Loading Dashboard...</p>
-	}
-
-	if (error) {
-		return <p>{error}</p>
-	}
-
-	if (!dashboard) {
-		return <p>No dashboard data was found</p>
+	if (isLoading || errorMsg || !dashboard) {
+		return <StatusMessage isLoading={isLoading} errorMsg={errorMsg} loadingText="Loading dashboard..." />;
 	}
 
 	const pageStats = [
 		{ title: 'Total Events', value: dashboard.total_events },
-		{ title: 'Total Upcoming Events', value: dashboard.total_upcoming_events },
+		{ title: 'Upcoming Events', value: dashboard.total_upcoming_events },
 		{ title: 'Total Teams', value: dashboard.total_teams },
 		{ title: 'Total Members', value: dashboard.total_members },
-		{ title: 'Total Active Members', value: dashboard.total_active_members },
-		{ title: 'Total Sessions', value: dashboard.total_sessions },
-		{ title: 'Total Upcoming Sessions', value: dashboard.total_upcoming_sessions },
-		{ title: 'Total Completed Sessions', value: dashboard.total_completed_sessions },
-		{ title: 'Total Active Managers', value: dashboard.total_active_managers }
+		{ title: 'Active Members', value: dashboard.total_active_members },
+		{ title: 'Total Matches', value: dashboard.total_sessions },
+		{ title: 'Upcoming Matches', value: dashboard.total_upcoming_sessions },
+		{ title: 'Completed Matches', value: dashboard.total_completed_sessions },
+		{ title: 'Active Managers', value: dashboard.total_active_managers }
 	];
 
 	const pageStatItems = pageStats.map(stat => (
@@ -66,8 +36,8 @@ function DashboardPage() {
 			<div className="mx-auto max-w-7xl space-y-8">
 				<div className="header-box">
 					<p className="text-sm font-medium text-purple-300">Dashboard</p>
-					<h1 className="stat-title">Dashboard Summary</h1>
-					<p className="text-xl">An Dashboard of the most relevant information that belong to this platform</p>
+					<h1 className="header-text">Dashboard Summary</h1>
+					<p className="mt-2 text-slate-400">A snapshot of events, matches, teams and members across the platform.</p>
 				</div>
 				<main className="flex-3">
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ">

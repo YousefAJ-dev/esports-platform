@@ -46,7 +46,7 @@ function TeamsEditor({ sessionId, status, onSaved, teams, initial }: TeamsEditor
 
 	return (
 		<form onSubmit={handleSubmit} className="stat-card">
-			<div className="mt-3 grid grid-cols-[160px_1fr] gap-x-4 gap-y-5 items-center">
+			<div className="form-grid">
 				<MatchTeamPicker teams={teams} value={teamSlots} onChange={setTeamSlots} disabled={isLocked} />
 			</div>
 

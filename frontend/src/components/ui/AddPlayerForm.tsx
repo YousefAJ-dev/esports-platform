@@ -53,7 +53,7 @@ export function AddPlayerForm({ teamId, hasCaptain, refreshKey, onAdded }: AddPl
 
 	return (
 		<form onSubmit={handleSubmit} className="stat-card">
-			<div className="mt-3 grid grid-cols-[160px_1fr] gap-x-4 gap-y-5 items-center">
+			<div className="form-grid">
 
 				{/* Member */}
 				<label htmlFor="member_id" className="text-lg mb-2">Member:</label>

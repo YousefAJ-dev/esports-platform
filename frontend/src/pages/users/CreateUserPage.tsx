@@ -4,6 +4,8 @@ import { createUser } from "../../api/usersApi";
 import FormField from "../../components/ui/FormField";
 import { inputChangeHandler } from "../../helper/helperFunctions";
 import type { CreateUserPayload } from "../../types/users";
+import CancelButton from "../../components/ui/CancelButton";
+import FormError from "../../components/ui/FormError";
 
 export function CreateUserPage() {
 
@@ -38,11 +40,11 @@ export function CreateUserPage() {
 		<div className="min-h-screen p-6">
 			<section className="mx-auto max-w-6xl space-y-8">
 				<div className="header-box">
-					<h1>Create User</h1>
+					<h1 className="header-text">Create User</h1>
 				</div>
 
 				<form onSubmit={handleSubmit} className="stat-card">
-					<div className="mt-7 grid grid-cols-[160px_1fr] gap-x-4 gap-y-5 items-center">
+					<div className="form-grid">
 						<FormField label="First Name:" name="first_name" type="text" value={formData.first_name} onChange={handleInputChange} required />
 						<FormField label="Last Name:" name="last_name" type="text" value={formData.last_name} onChange={handleInputChange} required />
 						<FormField label="Username:" name="username" type="text" value={formData.username} onChange={handleInputChange} required />
@@ -51,10 +53,11 @@ export function CreateUserPage() {
 						<FormField label="Active:" name="is_active" type="checkbox" checked={formData.is_active} onChange={handleInputChange} className="h-5 w-5" />
 					</div>
 
-					{errorMsg && <p className="mt-5 text-red-400">{errorMsg}</p>}
+					<FormError message={errorMsg} />
 
-					<div>
-						<button type="submit" className="green-btn green-btn-clickable mt-10 mb-5">Create User</button>
+					<div className="mt-10 mb-5 flex items-center gap-4">
+						<button type="submit" className="green-btn green-btn-clickable">Create User</button>
+						<CancelButton to="/users" />
 					</div>
 				</form>
 			</section>

@@ -6,6 +6,8 @@ import StatusMessage from "../../components/ui/StatusMessage";
 import { getChangedFields, inputChangeHandler } from "../../helper/helperFunctions";
 import { useAsyncData } from "../../hooks/useAsyncData";
 import type { UserSummary } from "../../types/users";
+import CancelButton from "../../components/ui/CancelButton";
+import FormError from "../../components/ui/FormError";
 
 type UserEditFormProps = {
 	id: string | undefined,
@@ -41,7 +43,7 @@ function UserEditForm({ id, original }: UserEditFormProps) {
 
 	return (
 		<form onSubmit={handleSubmit} className="mt-10 stat-card">
-			<div className="mt-7 grid grid-cols-[160px_1fr] gap-x-4 gap-y-5 items-center">
+			<div className="form-grid">
 				<FormField label="First Name:" name="first_name" type="text" value={formData.first_name} onChange={handleInputChange} required />
 				<FormField label="Last Name:" name="last_name" type="text" value={formData.last_name} onChange={handleInputChange} required />
 				<FormField label="Username:" name="username" type="text" value={formData.username} onChange={handleInputChange} required />
@@ -49,10 +51,11 @@ function UserEditForm({ id, original }: UserEditFormProps) {
 				<FormField label="Active:" name="is_active" type="checkbox" checked={formData.is_active} onChange={handleInputChange} className="h-5 w-5" />
 			</div>
 
-			{submitError && <p className="mt-5 text-red-400">{submitError}</p>}
+			<FormError message={submitError} />
 
-			<div>
-				<button type="submit" className="green-btn green-btn-clickable mt-10 mb-5">Save Changes</button>
+			<div className="mt-10 mb-5 flex items-center gap-4">
+				<button type="submit" className="green-btn green-btn-clickable">Save Changes</button>
+				<CancelButton to={`/users/${id}`} />
 			</div>
 		</form>
 	);
@@ -73,7 +76,7 @@ export function EditUserDetails() {
 	return (
 		<section className="flex flex-col gap-4">
 			<div className="header-box">
-				<h1>Edit User</h1>
+				<h1 className="header-text">Edit User</h1>
 				<p className="stat-id">User #{id}</p>
 			</div>
 			<UserEditForm id={id} original={user} />

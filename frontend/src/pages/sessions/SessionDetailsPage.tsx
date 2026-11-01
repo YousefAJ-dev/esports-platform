@@ -20,7 +20,7 @@ export function SessionDetailsPage() {
 			]);
 			return { session, overview, teams };
 		},
-		"Error fetching Session Data",
+		"Error fetching match data",
 		id
 	);
 
@@ -38,7 +38,7 @@ export function SessionDetailsPage() {
 	);
 
 	if (isLoading || errorMsg || !data) {
-		return <StatusMessage isLoading={isLoading} errorMsg={errorMsg ?? "Session not found"} loadingText="Loading sessions..." />;
+		return <StatusMessage isLoading={isLoading} errorMsg={errorMsg ?? "Match not found"} loadingText="Loading match..." />;
 	}
 
 	const { session, overview, teams } = data;

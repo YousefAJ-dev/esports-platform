@@ -1,51 +1,15 @@
-import { useEffect, useState } from "react";
-import type { SessionSummary } from "../../types/sessions";
 import { SessionCard } from "../../components/ui/SessionCard"
 import { getSessions } from "../../api/sessionsApi";
 import { Link } from "react-router";
+import StatusMessage from "../../components/ui/StatusMessage";
+import { useAsyncData } from "../../hooks/useAsyncData";
 
-function SessionsPage (){
+function SessionsPage() {
 
-	const [ sessions, setSessions ] = useState<SessionSummary[]>([]);
-	const [ errorMsg, setErrorMsg ] = useState<null | string>(null);
-	const [ isLoading, setIsLoading ] = useState(true);
+	const { data: sessions, errorMsg, isLoading } = useAsyncData(getSessions, "Failed to load match data", "sessions");
 
-	useEffect( () => {
-		async function loadSessionData() {
-			try {
-				const data = await getSessions();
-				setSessions(data);
-			} catch {
-				setErrorMsg("Failed to Fetch Session Data")
-			} finally {
-				setIsLoading(false);
-			}
-		}
-
-		loadSessionData();
-
-	}, []);
-
-	if (isLoading){
-		return (
-			<section className="min-h-screen bg-slate-950 p-6 text-slate-100">
-				<p className="text-purple-300">Loading sessions...</p>
-			</section>
-		);
-	}
-
-	if (errorMsg){
-		return (
-			<section className="min-h-screen bg-slate-950 p-6 text-slate-100">
-				<div className="stat-card">
-					{errorMsg}
-				</div>
-			</section>
-		);
-	}
-
-	if (!sessions){
-		return; 
+	if (isLoading || errorMsg || !sessions) {
+		return <StatusMessage isLoading={isLoading} errorMsg={errorMsg} loadingText="Loading matches..." />;
 	}
 
 	const sessionsList = sessions.map( session => (
@@ -63,11 +27,11 @@ function SessionsPage (){
 					<p className="text-sm font-medium text-purple-300">
 						Matches
 					</p>
-					<h1 className="mt-2 text-4xl font-bold text-white">
+					<h1 className="header-text">
 						Tournament Matches
 					</h1>
 					<p className="mt-2 text-slate-400">
-						An overview of sessions that belong to this platform
+						An overview of the matches played across all events.
 					</p>
 				</div>
 
@@ -75,7 +39,7 @@ function SessionsPage (){
 				{/* Summary Bar */}
 				<div className="stat-card">
 					<p className="stat-title">
-						Total Matches:
+						Total Matches
 					</p>
 					<p className="mt-1 text-3xl font-bold text-white">
 						{sessions.length}

@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { convertDate } from "../../helper/helperFunctions";
 import type { EventCardProp } from "../../types/events";
+import StatusPill from "./StatusPill";
 
 function EventCard({event}: EventCardProp) {
 
@@ -23,9 +24,7 @@ function EventCard({event}: EventCardProp) {
 					</h2>
 				</div>
 
-				<span className="status-pill">
-					{event.status}
-				</span>
+				<StatusPill status={event.status} />
 			</div>
 
 			<div className="stat-body">

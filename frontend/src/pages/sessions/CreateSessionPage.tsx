@@ -5,8 +5,10 @@ import { getTimeRangeError, inputChangeHandler } from "../../helper/helperFuncti
 import FormError from "../../components/ui/FormError";
 import { createSession } from "../../api/sessionsApi";
 import { getTeams } from "../../api/teamsApi";
+import { getEvents } from "../../api/eventsApi";
 import { useAsyncData } from "../../hooks/useAsyncData";
 import MatchTeamPicker, { type TeamSlots } from "../../components/ui/MatchTeamPicker";
+import CancelButton from "../../components/ui/CancelButton";
 
 export function CreateSessionPage() {
 
@@ -30,7 +32,15 @@ export function CreateSessionPage() {
 		'Exhibition'
 	];
 
-	const { data: teams, errorMsg: teamsError } = useAsyncData(getTeams, "Error fetching teams", "teams");
+	// Teams and events fill the dropdowns, so load them together
+	const { data: options, errorMsg: optionsError } = useAsyncData(
+		async () => {
+			const [teams, events] = await Promise.all([getTeams(), getEvents()]);
+			return { teams, events };
+		},
+		"Error fetching teams and events",
+		"create-match-options"
+	);
 
 	// team_ids is filled from these slots on submit
 	const [teamSlots, setTeamSlots] = useState<TeamSlots>(["", ""]);
@@ -54,6 +64,16 @@ export function CreateSessionPage() {
 	const timeError =
 		getTimeRangeError(formData.scheduled_start, formData.scheduled_end, "the scheduled start", "Scheduled end")
 		?? getTimeRangeError(formData.actual_start, formData.actual_end, "the actual start", "Actual end");
+
+	// Picking an event also switches the timezone to the event's, since matches usually share it
+	const handleEventChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+		const event = options?.events.find(item => String(item.event_id) === e.target.value);
+		setFormData(current => ({
+			...current,
+			event_id: e.target.value ? Number(e.target.value) : null,
+			timezone: event?.timezone ?? current.timezone,
+		}));
+	};
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement | HTMLSelectElement>) => {
 		inputChangeHandler(e, setFormData);
@@ -79,7 +99,7 @@ export function CreateSessionPage() {
 
 				{/* SECTION HEADER */}
 				<div className="header-box">
-					<h1>Create Match</h1>
+					<h1 className="header-text">Create Match</h1>
 				</div>
 
 				{/* Event Form*/}
@@ -87,24 +107,29 @@ export function CreateSessionPage() {
 					onSubmit={handleSubmit}
 					className="stat-card"
 				>
-					<div className="mt-7 grid grid-cols-[160px_1fr] gap-x-4 gap-y-5 items-center">
+					<div className="form-grid">
 
-						{/* Event ID */}
+						{/* Event - finished events are hidden unless it's the one passed in the URL */}
 						<label htmlFor="event_id" className="text-lg mb-2">
-							Event ID:
+							Event:
 						</label>
-						<input
+						<select
 							id="event_id"
-							type="number"
-							min={0}
 							name="event_id"
 							value={formData.event_id ?? ""}
-							onChange={handleInputChange}
+							onChange={handleEventChange}
 							required
 							className="purple-input-box"
-						/>
+						>
+							<option value="">Select an Event</option>
+							{(options?.events ?? [])
+								.filter(event => (event.status !== "Completed" && event.status !== "Cancelled") || event.event_id === formData.event_id)
+								.map(event => (
+									<option key={event.event_id} value={event.event_id}>{event.event_name}</option>
+								))}
+						</select>
 
-						{/* Session Type */}
+						{/* Match Type */}
 						<label htmlFor="session_type" className="text-lg mb-2">
 							Match Type:
 						</label>
@@ -122,7 +147,7 @@ export function CreateSessionPage() {
 						</select>
 
 						{/* Teams - a match is always between two teams */}
-						<MatchTeamPicker teams={teams ?? []} value={teamSlots} onChange={setTeamSlots} />
+						<MatchTeamPicker teams={options?.teams ?? []} value={teamSlots} onChange={setTeamSlots} />
 
 						{/* Scheduled Start */}
 						<label htmlFor="scheduled_start" className="text-lg mb-2">
@@ -225,10 +250,11 @@ export function CreateSessionPage() {
 
 					</div>
 
-					<FormError message={timeError ?? teamsError ?? submitError} />
+					<FormError message={timeError ?? optionsError ?? submitError} />
 
-					<div>
-						<button type="submit" disabled={timeError !== null} className="green-btn green-btn-clickable mt-10 mb-5 disabled:cursor-not-allowed disabled:opacity-50">Save Changes</button>
+					<div className="mt-10 mb-5 flex items-center gap-4">
+						<button type="submit" disabled={timeError !== null} className="green-btn green-btn-clickable disabled:cursor-not-allowed disabled:opacity-50">Save Changes</button>
+						<CancelButton to={eventIdParam ? `/events/${eventIdParam}` : "/sessions"} />
 					</div>
 				</form>
 			</section>

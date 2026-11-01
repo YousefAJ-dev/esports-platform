@@ -50,7 +50,7 @@ export function MemberDetailsPage() {
 
 				<div className="flex justify-end gap-4">
 					<Link to={`/members/${id}/edit`} className="green-btn green-btn-clickable">Edit</Link>
-					<button type="button" onClick={handleDelete} className="green-btn green-btn-clickable">Delete</button>
+					<button type="button" onClick={handleDelete} className="red-btn">Delete</button>
 				</div>
 
 				{actionError && <div className="stat-card">{actionError}</div>}

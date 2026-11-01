@@ -1,45 +1,15 @@
-import { useEffect, useState } from "react";
 import { getEvents } from "../../api/eventsApi";
-import type { EventSummary } from "../../types/events";
 import EventCard from "../../components/ui/EventCards";
 import { Link } from "react-router";
+import StatusMessage from "../../components/ui/StatusMessage";
+import { useAsyncData } from "../../hooks/useAsyncData";
 
 function EventsPage() {
-	const [events, setEvents] = useState<EventSummary[]>([]);
-	const [errorMsg, setErrorMsg] = useState<string | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
 
-	useEffect(() => {
-		async function loadEventData() {
-			try {
-				const data = await getEvents();
-				setEvents(data);
-			} catch {
-				setErrorMsg("Failed to load event data");
-			} finally {
-				setIsLoading(false);
-			}
-		}
+	const { data: events, errorMsg, isLoading } = useAsyncData(getEvents, "Failed to load event data", "events");
 
-		loadEventData();
-	}, []);
-
-	if (isLoading) {
-		return (
-			<section className="min-h-screen bg-slate-950 p-6 text-slate-100">
-				<p className="text-purple-300">Loading events...</p>
-			</section>
-		);
-	}
-
-	if (errorMsg) {
-		return (
-			<section className="min-h-screen bg-slate-950 p-6 text-slate-100">
-				<div className="stat-card">
-					{errorMsg}
-				</div>
-			</section>
-		);
+	if (isLoading || errorMsg || !events) {
+		return <StatusMessage isLoading={isLoading} errorMsg={errorMsg} loadingText="Loading events..." />;
 	}
 
 	const eventsList = events.map((event) => (
@@ -59,7 +29,7 @@ function EventsPage() {
 						Events
 					</p>
 
-					<h1 className="mt-2 text-4xl font-bold text-white">
+					<h1 className="header-text">
 						Platform Events
 					</h1>
 

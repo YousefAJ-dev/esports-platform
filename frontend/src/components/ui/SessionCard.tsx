@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { convertDate } from "../../helper/helperFunctions";
 import type { SessionCardProp } from "../../types/sessions";
+import StatusPill from "./StatusPill";
 
 export function SessionCard( {session} : SessionCardProp ){
 
@@ -16,13 +17,11 @@ export function SessionCard( {session} : SessionCardProp ){
 				<p className="stat-id">
 					Match #{session.session_id}
 				</p>
-				<p className="status-pill">
-					{session.status}
-				</p>
+				<StatusPill status={session.status} />
 			</div>
 			<div className="stat-body">
 				<h2 className="mt-2 text-xl font-semibold text-white">
-					Match Bracket: {session.session_type}
+					{session.session_type}
 				</h2>
 				<p>Event ID: {session.event_id}</p>
 				<div className="stat-field-grid">

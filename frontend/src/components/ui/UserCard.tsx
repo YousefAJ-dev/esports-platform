@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import type { UserCardProp } from "../../types/users";
+import StatusPill from "./StatusPill";
 
 export function UserCard({ user }: UserCardProp) {
 
@@ -19,9 +20,7 @@ export function UserCard({ user }: UserCardProp) {
 					</h2>
 				</div>
 
-				<span className="status-pill">
-					{user.is_active ? "Active" : "Inactive"}
-				</span>
+				<StatusPill status={user.is_active ? "Active" : "Inactive"} />
 			</div>
 
 			<div className="stat-body">

@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { convertDate } from "../../helper/helperFunctions";
 import type { Crumb } from "../../types/navigation";
 import type { EventMatch } from "../../types/sessions";
+import StatusPill from "./StatusPill";
 
 type MatchCardProps = {
 	match: EventMatch,
@@ -22,7 +23,7 @@ export function MatchCard({ match, trail, showRound = false }: MatchCardProps) {
 				<p className="stat-id">
 					{showRound ? match.session_type : `Match #${match.session_id}`}
 				</p>
-				<span className="status-pill">{match.status}</span>
+				<StatusPill status={match.status} />
 			</div>
 
 			<div className="mt-3 space-y-2">

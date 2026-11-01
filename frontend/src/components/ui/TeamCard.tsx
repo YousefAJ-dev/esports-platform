@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import type { TeamCardProp } from "../../types/teams";
+import StatusPill from "./StatusPill";
 
 export function TeamCard({ team }: TeamCardProp) {
 
@@ -19,9 +20,7 @@ export function TeamCard({ team }: TeamCardProp) {
 					</h2>
 				</div>
 
-				<span className="status-pill">
-					{team.is_active ? "Active" : "Inactive"}
-				</span>
+				<StatusPill status={team.is_active ? "Active" : "Inactive"} />
 			</div>
 
 			<div className="stat-body">
