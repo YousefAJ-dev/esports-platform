@@ -60,8 +60,8 @@ function parseMatchTeamIds(teamIds) {
 }
 
 
-// Matches can't be edited once completed
-async function assertSessionEditable(db, sessionId) {
+// Matches can't be edited once completed; subject names what was being changed
+async function assertSessionEditable(db, sessionId, subject = "Teams") {
 
 	const result = await db.query(
 		`SELECT status FROM sessions WHERE session_id = $1`,
@@ -73,7 +73,7 @@ async function assertSessionEditable(db, sessionId) {
 	}
 
 	if (result.rows[0].status === 'Completed') {
-		throw new RuleError(400, "Teams cannot be changed on a completed match");
+		throw new RuleError(400, `${subject} cannot be changed on a completed match`);
 	}
 }
 
@@ -142,6 +142,76 @@ async function assertTeamsCanPlay(db, sessionId, teamIds) {
 		if (team.clash_session_id) {
 			throw new RuleError(409, `${team.team_name} is already playing match #${team.clash_session_id} at that time`);
 		}
+	}
+}
+
+
+// A match has to be scheduled inside its event's start and end
+async function assertWithinEvent(db, sessionId) {
+
+	const result = await db.query(
+		`
+		SELECT
+			e.event_name,
+			s.scheduled_start >= e.start_on AND s.scheduled_end <= e.end_on AS fits
+		FROM sessions s
+		JOIN events e
+			ON s.event_id = e.event_id
+		WHERE s.session_id = $1
+		`,
+		[sessionId]
+	);
+
+	if (result.rows.length > 0 && !result.rows[0].fits) {
+		throw new RuleError(400, `Match must be scheduled within ${result.rows[0].event_name}'s start and end dates`);
+	}
+}
+
+
+// The reverse check for event edits: new event dates can't leave any of its matches outside them
+async function assertEventFitsMatches(db, eventId) {
+
+	const result = await db.query(
+		`
+		SELECT COUNT(*)::INT AS outside
+		FROM sessions s
+		JOIN events e
+			ON s.event_id = e.event_id
+		WHERE e.event_id = $1
+			AND (s.scheduled_start < e.start_on OR s.scheduled_end > e.end_on)
+		`,
+		[eventId]
+	);
+
+	const { outside } = result.rows[0];
+
+	if (outside > 0) {
+		throw new RuleError(400, `${outside} match${outside === 1 ? ' is' : 'es are'} scheduled outside these dates. Move ${outside === 1 ? 'it' : 'them'} first`);
+	}
+}
+
+
+// A match can only be completed once both teams have a score (no winner is allowed, for draws)
+async function assertHasResults(db, sessionId) {
+
+	const result = await db.query(
+		`
+		SELECT
+			COUNT(*)::INT AS teams,
+			COUNT(md.score)::INT AS scored
+		FROM session_teams st
+		LEFT JOIN match_details md
+			ON st.session_id = md.session_id
+			AND st.team_id = md.team_id
+		WHERE st.session_id = $1
+		`,
+		[sessionId]
+	);
+
+	const { teams, scored } = result.rows[0];
+
+	if (teams < TEAMS_PER_MATCH || scored < teams) {
+		throw new RuleError(400, "Enter a score for both teams before marking the match Completed");
 	}
 }
 
@@ -260,6 +330,9 @@ module.exports = {
 	parseMatchTeamIds,
 	assertSessionEditable,
 	assertTeamsCanPlay,
+	assertWithinEvent,
+	assertEventFitsMatches,
+	assertHasResults,
 	setMatchTeams,
 	assertCanRegister,
 	assertCanUnregister,

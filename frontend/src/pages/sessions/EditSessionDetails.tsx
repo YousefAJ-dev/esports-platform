@@ -82,6 +82,9 @@ export function EditSessionDetails() {
 		getTimeRangeError(formData.scheduled_start, formData.scheduled_end, "the scheduled start", "Scheduled end")
 		?? getTimeRangeError(formData.actual_start, formData.actual_end, "the actual start", "Actual end");
 
+	// Completed matches are locked server-side too; only the status can change, to reopen them
+	const isLocked = savedStatus === "Completed";
+
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
 		inputChangeHandler(e, setFormData)
 	};
@@ -93,7 +96,7 @@ export function EditSessionDetails() {
 
 		try {
 			// A cleared actual time comes through as "", which the backend can't cast - send null instead
-			await updateSessionByID(id, {
+			await updateSessionByID(id, isLocked ? { status: formData.status } : {
 				...formData,
 				actual_start: formData.actual_start || null,
 				actual_end: formData.actual_end || null,
@@ -129,6 +132,7 @@ export function EditSessionDetails() {
 					<select
 						id="session_type"
 						name="session_type"
+						disabled={isLocked}
 						value={formData.session_type}
 						onChange={handleInputChange}
 						className="purple-input-box"
@@ -147,6 +151,7 @@ export function EditSessionDetails() {
 						id="scheduled_start"
 						type="datetime-local"
 						name="scheduled_start"
+						disabled={isLocked}
 						value={formData.scheduled_start}
 						onChange={handleInputChange}
 						className="purple-input-box"
@@ -160,6 +165,7 @@ export function EditSessionDetails() {
 						id="scheduled_end"
 						type="datetime-local"
 						name="scheduled_end"
+						disabled={isLocked}
 						value={formData.scheduled_end}
 						onChange={handleInputChange}
 						className="purple-input-box"
@@ -173,6 +179,7 @@ export function EditSessionDetails() {
 						id="actual_start"
 						type="datetime-local"
 						name="actual_start"
+						disabled={isLocked}
 						value={formData.actual_start ?? ""}
 						onChange={handleInputChange}
 						className="purple-input-box"
@@ -186,6 +193,7 @@ export function EditSessionDetails() {
 						id="actual_end"
 						type="datetime-local"
 						name="actual_end"
+						disabled={isLocked}
 						value={formData.actual_end ?? ""}
 						onChange={handleInputChange}
 						className="purple-input-box"
@@ -195,6 +203,7 @@ export function EditSessionDetails() {
 					<label htmlFor="timezone" className="text-lg mb-2">Timezone:</label>
 					<select 
 						name="timezone" 
+						disabled={isLocked}
 						id="timezone"
 						className="purple-input-box"
 						value={formData.timezone ?? browserTimeZone}
@@ -229,6 +238,13 @@ export function EditSessionDetails() {
 					</select>
 				</div>
 
+				{isLocked && (
+					<p className="mt-5 text-sm text-slate-400">This match is completed and locked. Change its status to reopen it for edits.</p>
+				)}
+				{!isLocked && formData.status === "Completed" && (
+					<p className="mt-5 text-sm text-amber-300">Save both teams' scores in Results below before marking the match Completed.</p>
+				)}
+
 				<FormError message={timeError ?? submitError} />
 
 				<div className="mt-10 mb-5 flex items-center gap-4">
@@ -243,7 +259,7 @@ export function EditSessionDetails() {
 
 			{/* Match Results */}
 			<h2 className="mt-6 text-2xl font-semibold text-white">Results</h2>
-			<MatchResultsForm sessionId={id} refreshKey={teamsVersion} />
+			<MatchResultsForm sessionId={id} refreshKey={teamsVersion} isLocked={isLocked} />
 		</section>
 	);
 

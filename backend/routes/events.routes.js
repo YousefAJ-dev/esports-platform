@@ -3,7 +3,7 @@ const router = express.Router();
 const pool = require('../db/pool'); // importing data base
 const { getMissingFields } = require('../utils/validation');
 const { matchListQuery } = require('../utils/matchQueries');
-const { handleRuleError, assertCanRegister, assertCanUnregister } = require('../utils/businessRules');
+const { handleRuleError, assertCanRegister, assertCanUnregister, assertEventFitsMatches } = require('../utils/businessRules');
 
 
 // POST /api/events
@@ -612,18 +612,38 @@ router.patch('/:id', async (req, res) => {
 			RETURNING *;                  -- return updated row
     `;
 
-		// Execute query with values array
-		const result = await pool.query(query, values);
+		// Update and check together, so dates that would strand a match are rolled back
+		const client = await pool.connect();
 
-		// If no rows updated → event does not exist
-		if (result.rows.length === 0) {
-			return res.status(404).json({ error: "Event not found" });
+		try {
+
+			await client.query('BEGIN');
+
+			const result = await client.query(query, values);
+
+			// No rows updated means the event does not exist
+			if (result.rows.length === 0) {
+				await client.query('ROLLBACK');
+				return res.status(404).json({ error: "Event not found" });
+			}
+
+			await assertEventFitsMatches(client, id);
+
+			await client.query('COMMIT');
+
+			// Return updated event data to client
+			return res.json(result.rows[0]);
+
+		} catch (error) {
+			await client.query('ROLLBACK');
+			throw error;
+		} finally {
+			client.release();
 		}
 
-		// Return updated event data to client
-		return res.json(result.rows[0]);
-
 	} catch (error) {
+
+		if (handleRuleError(error, res)) return;
 
 		// chk_event_dates failed - the update left end_on at or before start_on
 		if (error.code === '23514') {

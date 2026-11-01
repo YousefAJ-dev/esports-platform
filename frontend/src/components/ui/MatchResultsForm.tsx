@@ -5,16 +5,18 @@ import type { MatchResult, SessionTeam } from "../../types/sessions";
 
 type MatchResultsFormProps = {
 	sessionId: string | undefined,
-	refreshKey?: number
+	refreshKey?: number,
+	isLocked?: boolean
 };
 
 type ResultsEditorProps = {
 	sessionId: string | undefined,
-	teams: SessionTeam[]
+	teams: SessionTeam[],
+	isLocked: boolean
 };
 
 // Kept separate from the session form so results can be saved on their own
-function ResultsEditor({ sessionId, teams }: ResultsEditorProps) {
+function ResultsEditor({ sessionId, teams, isLocked }: ResultsEditorProps) {
 
 	// Score is held as a string while editing so the input can be cleared
 	const [scores, setScores] = useState<Record<number, string>>(
@@ -44,47 +46,51 @@ function ResultsEditor({ sessionId, teams }: ResultsEditorProps) {
 
 	return (
 		<form onSubmit={handleSubmit} className="stat-card">
-			<div className="mt-3 grid grid-cols-[1fr_120px_100px] items-center gap-x-4 gap-y-4">
-				<p className="light-text">Team</p>
-				<p className="light-text">Score</p>
-				<p className="light-text">Winner</p>
+			{/* A disabled fieldset locks every input and button inside it */}
+			<fieldset disabled={isLocked} className="m-0 min-w-0 border-0 p-0 disabled:opacity-60">
+				<div className="mt-3 grid grid-cols-[1fr_120px_100px] items-center gap-x-4 gap-y-4">
+					<p className="light-text">Team</p>
+					<p className="light-text">Score</p>
+					<p className="light-text">Winner</p>
 
-				{teams.map(team => (
-					<div key={team.team_id} className="contents">
-						<label htmlFor={`score-${team.team_id}`} className="text-lg">{team.team_name}</label>
-						<input
-							id={`score-${team.team_id}`}
-							type="number"
-							min={0}
-							value={scores[team.team_id]}
-							onChange={e => setScores(current => ({ ...current, [team.team_id]: e.target.value }))}
-							className="purple-input-box"
-						/>
-						<input
-							type="radio"
-							name="winner"
-							aria-label={`${team.team_name} won`}
-							checked={winnerId === team.team_id}
-							onChange={() => setWinnerId(team.team_id)}
-							className="h-5 w-5"
-						/>
-					</div>
-				))}
-			</div>
+					{teams.map(team => (
+						<div key={team.team_id} className="contents">
+							<label htmlFor={`score-${team.team_id}`} className="text-lg">{team.team_name}</label>
+							<input
+								id={`score-${team.team_id}`}
+								type="number"
+								min={0}
+								value={scores[team.team_id]}
+								onChange={e => setScores(current => ({ ...current, [team.team_id]: e.target.value }))}
+								className="purple-input-box"
+							/>
+							<input
+								type="radio"
+								name="winner"
+								aria-label={`${team.team_name} won`}
+								checked={winnerId === team.team_id}
+								onChange={() => setWinnerId(team.team_id)}
+								className="h-5 w-5"
+							/>
+						</div>
+					))}
+				</div>
 
-			<div className="mt-8 mb-3 flex items-center gap-4">
-				<button type="submit" className="green-btn green-btn-clickable">Save Results</button>
-				{/* Lets a winner be removed, e.g. for a match that ended in a draw */}
-				<button type="button" onClick={() => setWinnerId(null)} className="text-sm text-slate-400 hover:text-purple-300">
-					Clear winner
-				</button>
-				{message && <p className="text-purple-300">{message}</p>}
-			</div>
+				<div className="mt-8 mb-3 flex items-center gap-4">
+					<button type="submit" className="green-btn green-btn-clickable">Save Results</button>
+					{/* Lets a winner be removed, e.g. for a match that ended in a draw */}
+					<button type="button" onClick={() => setWinnerId(null)} className="text-sm text-slate-400 hover:text-purple-300">
+						Clear winner
+					</button>
+					{message && <p className="text-purple-300">{message}</p>}
+				</div>
+			</fieldset>
+			{isLocked && <p className="text-sm text-slate-400">Results are locked on a completed match. Reopen it to change them.</p>}
 		</form>
 	);
 }
 
-export function MatchResultsForm({ sessionId, refreshKey = 0 }: MatchResultsFormProps) {
+export function MatchResultsForm({ sessionId, refreshKey = 0, isLocked = false }: MatchResultsFormProps) {
 
 	const { data: teams, errorMsg, isLoading } = useAsyncData(
 		() => getSessionTeams(sessionId), "Error fetching match teams", `${sessionId}:${refreshKey}`
@@ -102,7 +108,7 @@ export function MatchResultsForm({ sessionId, refreshKey = 0 }: MatchResultsForm
 	}
 
 	// Keyed on the team IDs so the editor's score state resets when the teams change
-	return <ResultsEditor key={teams.map(team => team.team_id).join("-")} sessionId={sessionId} teams={teams} />;
+	return <ResultsEditor key={teams.map(team => team.team_id).join("-")} sessionId={sessionId} teams={teams} isLocked={isLocked} />;
 }
 
 export default MatchResultsForm;

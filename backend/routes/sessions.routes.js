@@ -4,7 +4,7 @@ const { getMissingFields } = require('../utils/validation');
 const pool = require('../db/pool');
 const { handleDbError } = require('../utils/dbErrors');
 const { matchListQuery } = require('../utils/matchQueries');
-const { handleRuleError, parseMatchTeamIds, assertSessionEditable, assertTeamsCanPlay, setMatchTeams } = require('../utils/businessRules');
+const { RuleError, handleRuleError, parseMatchTeamIds, assertSessionEditable, assertTeamsCanPlay, assertWithinEvent, assertHasResults, setMatchTeams } = require('../utils/businessRules');
 
 
 // POST sessions
@@ -36,6 +36,11 @@ router.post('/', async (req, res) => {
 
 		// A session must be played by exactly two teams
 		const teamIds = parseMatchTeamIds(team_ids);
+
+		// A new match has no results yet, so it can't start out completed
+		if (status === 'Completed') {
+			throw new RuleError(400, "Create the match first, then enter results before marking it Completed");
+		}
 
 		// eventID FK check
 		const eventCheck = await pool.query(
@@ -111,6 +116,7 @@ router.post('/', async (req, res) => {
 			const session = result.rows[0];
 
 			// Checked after the insert so the overlap check can use the stored (timezone-converted) times
+			await assertWithinEvent(client, session.session_id);
 			await assertTeamsCanPlay(client, session.session_id, teamIds);
 			await setMatchTeams(client, session.session_id, teamIds);
 
@@ -434,6 +440,8 @@ router.put('/:id/results', async (req, res) => {
 
 		await client.query('BEGIN');
 
+		await assertSessionEditable(client, id, "Results");
+
 		// Clear the old winner first so moving the win to another team doesn't trip uq_match_winner
 		await client.query(
 			`UPDATE match_details SET is_winner = FALSE WHERE session_id = $1`,
@@ -459,6 +467,8 @@ router.put('/:id/results', async (req, res) => {
 	} catch (error) {
 
 		await client.query('ROLLBACK');
+
+		if (handleRuleError(error, res)) return;
 
 		return handleDbError(error, res, "saving");
 
@@ -541,17 +551,52 @@ router.patch('/:id', async (req, res) => {
 		RETURNING session_id, event_id, session_type, scheduled_start, scheduled_end, actual_start, actual_end, session_type, timezone, status
 		`;
 
-		const result = await pool.query(query, values);
+		const client = await pool.connect();
 
-		if (result.rows.length === 0) {
-			return res.status(404).json({
-				error: `Session Not Found: ${id}`
-			})
+		try {
+
+			await client.query('BEGIN');
+
+			// Lock the row so the status check and the update see the same state
+			const current = await client.query(
+				`SELECT status FROM sessions WHERE session_id = $1 FOR UPDATE`,
+				[id]
+			);
+
+			if (current.rows.length === 0) {
+				await client.query('ROLLBACK');
+				return res.status(404).json({ error: `Session Not Found: ${id}` });
+			}
+
+			// Completed matches are locked; only the status can change, which is how a match is reopened
+			const changesMoreThanStatus = Object.keys(req.body).some(field => allowedFields.includes(field) && field !== 'status');
+
+			if (current.rows[0].status === 'Completed' && changesMoreThanStatus) {
+				throw new RuleError(400, "Completed matches are locked. Change the status to reopen it first");
+			}
+
+			const result = await client.query(query, values);
+
+			await assertWithinEvent(client, id);
+
+			if (result.rows[0].status === 'Completed') {
+				await assertHasResults(client, id);
+			}
+
+			await client.query('COMMIT');
+
+			return res.status(200).json(result.rows[0]);
+
+		} catch (error) {
+			await client.query('ROLLBACK');
+			throw error;
+		} finally {
+			client.release();
 		}
 
-		return res.status(200).json(result.rows[0]);
-
 	} catch (error) {
+
+		if (handleRuleError(error, res)) return;
 
 		// chk_session_schedule_date / chk_session_actual_date failed
 		if (error.code === '23514') {
