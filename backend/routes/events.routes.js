@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../db/pool'); // importing data base
 const { getMissingFields } = require('../utils/validation');
 const { matchListQuery } = require('../utils/matchQueries');
+const { handleRuleError, assertCanRegister, assertCanUnregister } = require('../utils/businessRules');
 
 
 // POST /api/events
@@ -206,6 +207,134 @@ router.get('/:id/matches', async (req, res) => {
 	} catch (error) {
 
 		console.error("Error getting event's matches:", error.message);
+
+		return res.status(500).json({ error: 'Internal Server Error' });
+	}
+
+});
+
+
+// GET /api/events/:id/teams - teams registered for the event, with how many of its matches each is in
+router.get('/:id/teams', async (req, res) => {
+
+	try {
+
+		const id = parseInt(req.params.id);
+
+		if (isNaN(id)) { return res.status(400).json({ error: "Invalid event ID" }) };
+
+		const result = await pool.query(
+			`
+			SELECT
+				t.team_id,
+				t.team_name,
+				COALESCE(t.is_active, TRUE) AS is_active,
+				et.registered_on,
+				COUNT(s.session_id)::INT AS match_count
+
+			FROM event_teams et
+
+			JOIN teams t
+				ON et.team_id = t.team_id
+
+			LEFT JOIN session_teams st
+				ON t.team_id = st.team_id
+
+			LEFT JOIN sessions s
+				ON st.session_id = s.session_id
+				AND s.event_id = et.event_id
+
+			WHERE et.event_id = $1
+			GROUP BY t.team_id, et.registered_on
+			ORDER BY t.team_name
+			`,
+			[id]
+		);
+
+		return res.status(200).json(result.rows);
+
+	} catch (error) {
+
+		console.error("Error getting event teams:", error.message);
+
+		return res.status(500).json({ error: 'Internal Server Error' });
+	}
+
+});
+
+
+// POST /api/events/:id/teams - register a team for the event
+router.post('/:id/teams', async (req, res) => {
+
+	try {
+
+		const id = parseInt(req.params.id);
+		const teamId = parseInt(req.body.team_id);
+
+		if (isNaN(id) || isNaN(teamId)) {
+			return res.status(400).json({ error: "A valid event ID and team_id are required" });
+		}
+
+		await assertCanRegister(pool, id, teamId);
+
+		const result = await pool.query(
+			`
+			INSERT INTO event_teams (event_id, team_id)
+			VALUES ($1, $2)
+			RETURNING event_team_id, event_id, team_id, registered_on
+			`,
+			[id, teamId]
+		);
+
+		return res.status(201).json(result.rows[0]);
+
+	} catch (error) {
+
+		if (handleRuleError(error, res)) return;
+
+		console.error("Error registering team:", error.message);
+
+		return res.status(500).json({ error: 'Internal Server Error' });
+	}
+
+});
+
+
+// DELETE /api/events/:id/teams/:teamId - withdraw a team that isn't in any of the event's matches
+router.delete('/:id/teams/:teamId', async (req, res) => {
+
+	try {
+
+		const id = parseInt(req.params.id);
+		const teamId = parseInt(req.params.teamId);
+
+		if (isNaN(id) || isNaN(teamId)) {
+			return res.status(400).json({ error: "Invalid event or team ID" });
+		}
+
+		await assertCanUnregister(pool, id, teamId);
+
+		const result = await pool.query(
+			`
+			DELETE FROM event_teams
+			WHERE event_id = $1
+				AND team_id = $2
+			RETURNING event_team_id, event_id, team_id
+			`,
+			[id, teamId]
+		);
+
+		if (result.rows.length === 0) {
+			return res.status(404).json({ error: "Team is not registered for this event" });
+		}
+
+		return res.status(200).json(result.rows[0]);
+
+	} catch (error) {
+
+		if (handleRuleError(error, res)) return;
+
+		console.error("Error withdrawing team:", error.message);
 
 		return res.status(500).json({ error: 'Internal Server Error' });
 	}

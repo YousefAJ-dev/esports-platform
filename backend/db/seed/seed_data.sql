@@ -316,6 +316,19 @@ VALUES
 
 
 -- ====================================
+-- EVENT_TEAMS
+-- ====================================
+
+-- Every team that plays in an event's matches is registered for that event
+INSERT INTO event_teams (event_id, team_id)
+SELECT DISTINCT s.event_id, st.team_id
+FROM session_teams st
+JOIN sessions s
+	ON st.session_id = s.session_id
+ORDER BY s.event_id, st.team_id;
+
+
+-- ====================================
 -- MATCH_DETAILS
 -- ====================================
 

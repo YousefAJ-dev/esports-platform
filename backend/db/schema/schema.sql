@@ -11,6 +11,7 @@
 \i backend/db/schema/009_roles.sql
 \i backend/db/schema/006_team_members.sql
 \i backend/db/schema/007_session_teams.sql
+\i backend/db/schema/013_event_teams.sql
 \i backend/db/schema/012_match_details.sql
 \i backend/db/schema/010_team_users.sql
 \i backend/db/schema/011_user_roles.sql

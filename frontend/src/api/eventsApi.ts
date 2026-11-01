@@ -1,5 +1,5 @@
 import { apiRequest } from "./apiClient";
-import type { CreateEventPayload, EventOverview, EventSummary, UpdateEventPayload } from "../types/events";
+import type { CreateEventPayload, EventOverview, EventTeam, EventSummary, UpdateEventPayload } from "../types/events";
 import type { EventMatch } from "../types/sessions";
 
 
@@ -35,6 +35,19 @@ export function createEvent(eventData: CreateEventPayload):Promise<EventSummary>
 		method: "POST",
 		body: JSON.stringify(eventData),
 	});
+}
+
+// Teams registered for an event; only these can be put into its matches
+export function getEventTeams(id: string | number | undefined): Promise<EventTeam[]> {
+	return apiRequest<EventTeam[]>(`/events/${id}/teams`);
+}
+
+export function registerEventTeam(id: string | undefined, teamId: number): Promise<unknown> {
+	return apiRequest<unknown>(`/events/${id}/teams`, { method: "POST", body: JSON.stringify({ team_id: teamId }) });
+}
+
+export function unregisterEventTeam(id: string | undefined, teamId: number): Promise<unknown> {
+	return apiRequest<unknown>(`/events/${id}/teams/${teamId}`, { method: "DELETE" });
 }
 
 // All matches in an event with their teams and results, already sorted by round

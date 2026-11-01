@@ -1,19 +1,20 @@
 import { useState } from "react";
 import { getSessionTeams, updateSessionTeams } from "../../api/sessionsApi";
-import { getTeams } from "../../api/teamsApi";
+import { getEventTeams } from "../../api/eventsApi";
 import { useAsyncData } from "../../hooks/useAsyncData";
-import type { TeamSummary } from "../../types/teams";
+import type { EventTeam } from "../../types/events";
 import FormError from "./FormError";
 import MatchTeamPicker, { type TeamSlots } from "./MatchTeamPicker";
 
 type MatchTeamsFormProps = {
 	sessionId: string | undefined,
+	eventId: number,
 	status: string,
 	onSaved: () => void
 };
 
 type TeamsEditorProps = MatchTeamsFormProps & {
-	teams: TeamSummary[],
+	teams: EventTeam[],
 	initial: TeamSlots
 };
 
@@ -69,12 +70,12 @@ function TeamsEditor({ sessionId, status, onSaved, teams, initial }: TeamsEditor
 // Kept separate from the session form so teams can be saved on their own
 export function MatchTeamsForm(props: MatchTeamsFormProps) {
 
-	const { sessionId } = props;
+	const { sessionId, eventId } = props;
 
-	// All teams for the dropdowns plus the two currently in the match
+	// The event's registered teams for the dropdowns plus the two currently in the match
 	const { data, errorMsg, isLoading } = useAsyncData(
 		async () => {
-			const [teams, current] = await Promise.all([getTeams(), getSessionTeams(sessionId)]);
+			const [teams, current] = await Promise.all([getEventTeams(eventId), getSessionTeams(sessionId)]);
 			return { teams, current };
 		},
 		"Error fetching match teams",

@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router";
 import { getEventByID, getEventMatches, getEventOverview } from "../../api/eventsApi";
 import Breadcrumbs from "../../components/ui/Breadcrumbs";
 import EventBracket from "../../components/ui/EventBracket";
+import EventTeamsSection from "../../components/ui/EventTeamsSection";
 import MatchCard from "../../components/ui/MatchCard";
 import StatusMessage from "../../components/ui/StatusMessage";
 import { convertDate } from "../../helper/helperFunctions";
@@ -154,6 +155,12 @@ export function EventDetailPage() {
 						</p>
 					</div>
 				</div>
+			</section>
+
+			{/* Registered Teams - matches can only use these */}
+			<section>
+				<h2 className="mb-4 text-2xl font-semibold text-white">Registered Teams</h2>
+				<EventTeamsSection eventId={id} eventStatus={event.status} trail={childTrail} />
 			</section>
 
 			{/* Bracket */}

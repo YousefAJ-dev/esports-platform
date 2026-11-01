@@ -31,6 +31,10 @@ function handleRuleError(error, res) {
 		return res.status(409).json({ error: "Team is already in this match" });
 	}
 
+	if (error.code === UNIQUE_VIOLATION && error.constraint === 'uq_event_team') {
+		return res.status(409).json({ error: "Team is already registered for this event" });
+	}
+
 	return null;
 }
 
@@ -74,8 +78,9 @@ async function assertSessionEditable(db, sessionId) {
 }
 
 
-// Every team must exist, be active, and not already be playing another match at an overlapping time.
-// One query for all teams: the lateral join finds the first clashing match per team.
+// Every team must exist, be active, be registered for the match's event, and not already be
+// playing another match at an overlapping time. One query for all teams: the lateral join finds
+// the first clashing match per team.
 async function assertTeamsCanPlay(db, sessionId, teamIds) {
 
 	const result = await db.query(
@@ -84,12 +89,18 @@ async function assertTeamsCanPlay(db, sessionId, teamIds) {
 			t.team_id,
 			t.team_name,
 			COALESCE(t.is_active, TRUE) AS is_active,
+			EXISTS (
+				SELECT 1
+				FROM event_teams et
+				WHERE et.event_id = cur.event_id
+					AND et.team_id = t.team_id
+			) AS is_registered,
 			clash.session_id AS clash_session_id
 
 		FROM teams t
 
 		CROSS JOIN (
-			SELECT scheduled_start, scheduled_end, status
+			SELECT event_id, scheduled_start, scheduled_end, status
 			FROM sessions
 			WHERE session_id = $2
 		) cur
@@ -124,6 +135,10 @@ async function assertTeamsCanPlay(db, sessionId, teamIds) {
 			throw new RuleError(400, `${team.team_name} is inactive and cannot be added to a match`);
 		}
 
+		if (!team.is_registered) {
+			throw new RuleError(400, `${team.team_name} is not registered for this event`);
+		}
+
 		if (team.clash_session_id) {
 			throw new RuleError(409, `${team.team_name} is already playing match #${team.clash_session_id} at that time`);
 		}
@@ -147,6 +162,52 @@ async function setMatchTeams(db, sessionId, teamIds) {
 		`,
 		[sessionId, teamIds]
 	);
+}
+
+
+// Teams can only register for an event that hasn't finished, and only while active
+async function assertCanRegister(db, eventId, teamId) {
+
+	const result = await db.query(
+		`
+		SELECT
+			(SELECT status FROM events WHERE event_id = $1) AS event_status,
+			(SELECT COALESCE(is_active, TRUE) FROM teams WHERE team_id = $2) AS team_active
+		`,
+		[eventId, teamId]
+	);
+
+	const { event_status, team_active } = result.rows[0];
+
+	if (event_status === null) throw new RuleError(404, `Could not find Event ID: ${eventId}`);
+	if (team_active === null) throw new RuleError(404, `Could not find Team ID: ${teamId}`);
+	if (event_status === 'Completed' || event_status === 'Cancelled') {
+		throw new RuleError(400, `Teams cannot register for a ${event_status.toLowerCase()} event`);
+	}
+	if (!team_active) throw new RuleError(400, "Inactive teams cannot register for an event");
+}
+
+
+// A team can only leave an event it hasn't been scheduled to play in yet
+async function assertCanUnregister(db, eventId, teamId) {
+
+	const result = await db.query(
+		`
+		SELECT COUNT(*)::INT AS match_count
+		FROM session_teams st
+		JOIN sessions s
+			ON st.session_id = s.session_id
+		WHERE s.event_id = $1
+			AND st.team_id = $2
+		`,
+		[eventId, teamId]
+	);
+
+	const { match_count } = result.rows[0];
+
+	if (match_count > 0) {
+		throw new RuleError(409, `Team is in ${match_count} match${match_count === 1 ? '' : 'es'} for this event. Remove it from those first`);
+	}
 }
 
 
@@ -200,5 +261,7 @@ module.exports = {
 	assertSessionEditable,
 	assertTeamsCanPlay,
 	setMatchTeams,
+	assertCanRegister,
+	assertCanUnregister,
 	assertCanJoinTeam,
 };

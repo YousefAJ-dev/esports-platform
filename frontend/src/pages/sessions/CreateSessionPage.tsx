@@ -1,11 +1,10 @@
 import { useState } from "react";
 import type { CreateSessionPayload } from "../../types/sessions";
-import { useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { getTimeRangeError, inputChangeHandler } from "../../helper/helperFunctions";
 import FormError from "../../components/ui/FormError";
 import { createSession } from "../../api/sessionsApi";
-import { getTeams } from "../../api/teamsApi";
-import { getEvents } from "../../api/eventsApi";
+import { getEventTeams, getEvents } from "../../api/eventsApi";
 import { useAsyncData } from "../../hooks/useAsyncData";
 import MatchTeamPicker, { type TeamSlots } from "../../components/ui/MatchTeamPicker";
 import CancelButton from "../../components/ui/CancelButton";
@@ -32,15 +31,7 @@ export function CreateSessionPage() {
 		'Exhibition'
 	];
 
-	// Teams and events fill the dropdowns, so load them together
-	const { data: options, errorMsg: optionsError } = useAsyncData(
-		async () => {
-			const [teams, events] = await Promise.all([getTeams(), getEvents()]);
-			return { teams, events };
-		},
-		"Error fetching teams and events",
-		"create-match-options"
-	);
+	const { data: events, errorMsg: eventsError } = useAsyncData(getEvents, "Error fetching events", "create-match-events");
 
 	// team_ids is filled from these slots on submit
 	const [teamSlots, setTeamSlots] = useState<TeamSlots>(["", ""]);
@@ -60,6 +51,13 @@ export function CreateSessionPage() {
 
 	const [submitError, setSubmitError] = useState<string | null>(null);
 
+	// Only teams registered for the chosen event can play in its matches
+	const { data: eventTeams, errorMsg: teamsError } = useAsyncData(
+		() => formData.event_id ? getEventTeams(formData.event_id) : Promise.resolve([]),
+		"Error fetching the event's teams",
+		formData.event_id
+	);
+
 	// Checked on every render so the message shows up as soon as the times are wrong
 	const timeError =
 		getTimeRangeError(formData.scheduled_start, formData.scheduled_end, "the scheduled start", "Scheduled end")
@@ -67,7 +65,9 @@ export function CreateSessionPage() {
 
 	// Picking an event also switches the timezone to the event's, since matches usually share it
 	const handleEventChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		const event = options?.events.find(item => String(item.event_id) === e.target.value);
+		const event = events?.find(item => String(item.event_id) === e.target.value);
+		// Teams are per event, so a new event clears the picked teams
+		setTeamSlots(["", ""]);
 		setFormData(current => ({
 			...current,
 			event_id: e.target.value ? Number(e.target.value) : null,
@@ -122,7 +122,7 @@ export function CreateSessionPage() {
 							className="purple-input-box"
 						>
 							<option value="">Select an Event</option>
-							{(options?.events ?? [])
+							{(events ?? [])
 								.filter(event => (event.status !== "Completed" && event.status !== "Cancelled") || event.event_id === formData.event_id)
 								.map(event => (
 									<option key={event.event_id} value={event.event_id}>{event.event_name}</option>
@@ -147,7 +147,13 @@ export function CreateSessionPage() {
 						</select>
 
 						{/* Teams - a match is always between two teams */}
-						<MatchTeamPicker teams={options?.teams ?? []} value={teamSlots} onChange={setTeamSlots} />
+						<MatchTeamPicker teams={eventTeams ?? []} disabled={!formData.event_id} value={teamSlots} onChange={setTeamSlots} />
+						{formData.event_id && eventTeams && eventTeams.length < 2 && (
+							<p className="text-sm text-amber-300 sm:col-span-2">
+								This event needs at least two registered teams.{" "}
+								<Link to={`/events/${formData.event_id}`} className="underline hover:text-amber-200">Register teams on the event page</Link>
+							</p>
+						)}
 
 						{/* Scheduled Start */}
 						<label htmlFor="scheduled_start" className="text-lg mb-2">
@@ -250,7 +256,7 @@ export function CreateSessionPage() {
 
 					</div>
 
-					<FormError message={timeError ?? optionsError ?? submitError} />
+					<FormError message={timeError ?? eventsError ?? teamsError ?? submitError} />
 
 					<div className="mt-10 mb-5 flex items-center gap-4">
 						<button type="submit" disabled={timeError !== null} className="green-btn green-btn-clickable disabled:cursor-not-allowed disabled:opacity-50">Save Changes</button>

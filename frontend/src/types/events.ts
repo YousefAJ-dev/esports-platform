@@ -20,6 +20,15 @@ export type EventOverview = {
 	status: string
 };
 
+// A team registered for an event, from GET /events/:id/teams
+export type EventTeam = {
+	team_id: number,
+	team_name: string,
+	is_active: boolean,
+	registered_on: string,
+	match_count: number
+};
+
 export type UpdateEventPayload = Partial<EventSummary>;
 
 export type CreateEventPayload = Omit<EventSummary, "event_id">;

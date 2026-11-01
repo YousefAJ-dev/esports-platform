@@ -239,7 +239,7 @@ export function EditSessionDetails() {
 
 			{/* Match Teams */}
 			<h2 className="mt-6 text-2xl font-semibold text-white">Teams</h2>
-			<MatchTeamsForm sessionId={id} status={savedStatus} onSaved={() => setTeamsVersion(v => v + 1)} />
+			<MatchTeamsForm sessionId={id} eventId={formData.event_id} status={savedStatus} onSaved={() => setTeamsVersion(v => v + 1)} />
 
 			{/* Match Results */}
 			<h2 className="mt-6 text-2xl font-semibold text-white">Results</h2>

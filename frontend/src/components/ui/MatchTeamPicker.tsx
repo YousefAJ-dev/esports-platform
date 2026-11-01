@@ -3,8 +3,11 @@ import type { TeamSummary } from "../../types/teams";
 // Selected team ID per slot, "" when nothing is picked yet
 export type TeamSlots = [string, string];
 
+// Works with both TeamSummary and EventTeam rows
+type PickerTeam = Pick<TeamSummary, "team_id" | "team_name" | "is_active">;
+
 type MatchTeamPickerProps = {
-	teams: TeamSummary[],
+	teams: PickerTeam[],
 	value: TeamSlots,
 	onChange: (value: TeamSlots) => void,
 	disabled?: boolean
