@@ -56,14 +56,14 @@ function App() {
 				<Route path="events" element={<EventsPage />} />
 				<Route path="events/:id" element={< EventDetailsPage />} />
 				<Route path="sessions" element={<SessionsPage />} />
-				<Route path="sessions/:id" element={<SessionDetailsPage/>}/>
+				<Route path="sessions/:id" element={<SessionDetailsPage />} />
 				<Route path="standings" element={<StandingsPage />} />
 
 				{/* Organizers and Admins; ownership of the specific event is checked by the server */}
-				<Route path='events/new' element={<RequirePermission allow={canCreateEvent}><EventCreatePage /></RequirePermission>}/>
-				<Route path="events/:id/edit" element={<RequirePermission allow={canCreateEvent}><EditEventDetails /></RequirePermission>}/>
-				<Route path='sessions/new' element={<RequirePermission allow={canCreateEvent}><SessionCreate/></RequirePermission>}/>
-				<Route path="sessions/:id/edit" element={<RequirePermission allow={canCreateEvent}><EditSessionDetails/></RequirePermission>}/>
+				<Route path='events/new' element={<RequirePermission allow={canCreateEvent}><EventCreatePage /></RequirePermission>} />
+				<Route path="events/:id/edit" element={<RequirePermission allow={canCreateEvent}><EditEventDetails /></RequirePermission>} />
+				<Route path='sessions/new' element={<RequirePermission allow={canCreateEvent}><SessionCreate /></RequirePermission>} />
+				<Route path="sessions/:id/edit" element={<RequirePermission allow={canCreateEvent}><EditSessionDetails /></RequirePermission>} />
 
 				{/* Teams and members need a login */}
 				<Route path="teams" element={<RequirePermission><TeamsPage /></RequirePermission>} />

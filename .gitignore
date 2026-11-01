@@ -11,3 +11,7 @@ yarn-error.log*
 
 # OS
 .DS_Store
+
+docs/plans
+
+backend/db/seed
