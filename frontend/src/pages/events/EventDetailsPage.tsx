@@ -4,6 +4,8 @@ import { getEventByID, getEventMatches, getEventOverview } from "../../api/event
 import Breadcrumbs from "../../components/ui/Breadcrumbs";
 import EventBracket from "../../components/ui/EventBracket";
 import EventTeamsSection from "../../components/ui/EventTeamsSection";
+import StandingsTable from "../../components/ui/StandingsTable";
+import { getStandings } from "../../api/standingsApi";
 import MatchCard from "../../components/ui/MatchCard";
 import StatusMessage from "../../components/ui/StatusMessage";
 import { convertDate } from "../../helper/helperFunctions";
@@ -17,12 +19,13 @@ export function EventDetailPage() {
 	// Event, overview and matches don't depend on each other, so load them in parallel
 	const { data, errorMsg, isLoading } = useAsyncData(
 		async () => {
-			const [event, overview, matches] = await Promise.all([
+			const [event, overview, matches, standings] = await Promise.all([
 				getEventByID(id),
 				getEventOverview(id),
-				getEventMatches(id)
+				getEventMatches(id),
+				getStandings(id)
 			]);
-			return { event, overview, matches };
+			return { event, overview, matches, standings };
 		},
 		"Failed to fetch Event Data",
 		id
@@ -45,7 +48,7 @@ export function EventDetailPage() {
 		return <StatusMessage isLoading={isLoading} errorMsg={errorMsg ?? "No event found."} loadingText="Loading event..." />;
 	}
 
-	const { event, overview, matches } = data;
+	const { event, overview, matches, standings } = data;
 
 	return (
 	<div>
@@ -179,6 +182,12 @@ export function EventDetailPage() {
 				</div>
 
 				<EventBracket matches={matches} trail={childTrail} />
+			</section>
+
+			{/* Standings - this event's registered teams only */}
+			<section>
+				<h2 className="mb-4 text-2xl font-semibold text-white">Standings</h2>
+				<StandingsTable standings={standings} trail={childTrail} />
 			</section>
 
 			{/* Match Schedule */}

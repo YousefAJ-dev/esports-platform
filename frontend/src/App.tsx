@@ -27,6 +27,8 @@ import MemberDetailsPage from './pages/members/MemberDetailsPage';
 import EditMemberDetails from './pages/members/EditMemberDetails';
 import CreateMemberPage from './pages/members/CreateMemberPage';
 
+import StandingsPage from './pages/standings/StandingsPage';
+
 import UsersPage from './pages/users/UsersPage';
 import UserDetailsPage from './pages/users/UserDetailsPage';
 import EditUserDetails from './pages/users/EditUserDetails';
@@ -51,6 +53,8 @@ function App() {
 				<Route path="sessions/:id/edit" element={<EditSessionDetails/>}/>
 				<Route path='sessions/new' element={<SessionCreate/>}/>
 				
+				<Route path="standings" element={<StandingsPage />} />
+
 				<Route path="teams" element={<TeamsPage />} />
 				<Route path="teams/:id" element={<TeamDetailsPage />} />
 				<Route path="teams/:id/edit" element={<EditTeamDetails />} />

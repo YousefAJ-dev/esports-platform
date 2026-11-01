@@ -15,6 +15,7 @@ const teamUsersRoutes = require('./routes/team_users.routes');
 const rolesRoutes = require('./routes/roles.routes');
 const userRolesRoutes = require('./routes/user_roles.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
+const standingsRoutes = require('./routes/standings.routes');
 
 
 /* allows React frontend to call express API during dev
@@ -64,6 +65,7 @@ app.use('/api/team_users', teamUsersRoutes);
 app.use('/api/roles', rolesRoutes);
 app.use('/api/user_roles', userRolesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/standings', standingsRoutes);
 
 
 module.exports = app

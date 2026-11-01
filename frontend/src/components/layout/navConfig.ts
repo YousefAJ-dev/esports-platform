@@ -19,6 +19,7 @@ export const NAV_GROUPS: NavGroup[] = [
 			{ label: "Dashboard", path: "/dashboard", icon: "dashboard" },
 			{ label: "Events", path: "/events", icon: "events" },
 			{ label: "Matches", path: "/sessions", icon: "matches" },
+			{ label: "Standings", path: "/standings", icon: "standings" },
 		]
 	},
 	{
