@@ -27,3 +27,8 @@ CREATE UNIQUE INDEX uq_active_team_member
 CREATE UNIQUE INDEX uq_team_captain
 	ON team_members(team_id)
 	WHERE team_position = 'Captain' AND end_date IS NULL;
+
+-- At most one active substitute per team
+CREATE UNIQUE INDEX uq_team_substitute
+	ON team_members(team_id)
+	WHERE team_position = 'Substitute' AND end_date IS NULL;

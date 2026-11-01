@@ -245,9 +245,26 @@ DB_PORT=5432
 DB_NAME=esports_platform
 DB_USER=your_username
 DB_PASSWORD=your_password
+
+# Signs the login session cookie. Use a long random string; the server won't start without it.
+# One way to make one: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+SESSION_SECRET=replace_with_a_long_random_string
 ```
 
 Do not commit `.env` files or database passwords to GitHub.
+
+### Logging In (Development)
+
+Every seeded user has the dev password `ArenaDev2026!`. Change these before using real data.
+
+| Username | Role |
+|---|---|
+| `TheSysAdmin` | Admin |
+| `O3OQueen` | Organizer (owns the seeded events) |
+| `A2NShikimaru` | Analyst |
+| `TM1AEinstein` | Team Manager (Quantum Titans) |
+
+Visitors who aren't logged in can still view the dashboard, events, brackets, matches and standings. See [docs/RBAC.md](docs/RBAC.md) for what each role can do.
 
 ### Initialize the Database
 

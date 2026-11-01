@@ -1,6 +1,11 @@
 const express = require('express') // Require express lib
 const app = express() // set up variable to call server start
-//const cors = require('cors')
+const cors = require('cors')
+const session = require('express-session');
+const PgSessionStore = require('connect-pg-simple')(session);
+const pool = require('./db/pool');
+const { loadUser, requireLogin } = require('./middleware/auth');
+const authRoutes = require('./routes/auth.routes');
 
 const dbCheck = require('./routes/dbHealth.routes');
 const eventsRoutes = require('./routes/events.routes');
@@ -18,11 +23,27 @@ const dashboardRoutes = require('./routes/dashboard.routes');
 const standingsRoutes = require('./routes/standings.routes');
 
 
-/* allows React frontend to call express API during dev
-app.use(cors({
-	origin: 'http://localhost:5173'
-}));
-*/
+// Only needed when the frontend runs on a different origin than the API (VITE_API_BASE_URL).
+// The Vite dev proxy makes requests same-origin, so this stays off unless CORS_ORIGIN is set.
+// credentials: true lets the browser send the session cookie cross-origin.
+if (process.env.CORS_ORIGIN) {
+	app.use(cors({
+		origin: process.env.CORS_ORIGIN,
+		credentials: true
+	}));
+}
+
+// Signs the session cookie so it can't be forged; refusing to start beats running with a weak default
+if (!process.env.SESSION_SECRET) {
+	throw new Error("SESSION_SECRET is missing from .env - add a long random string");
+}
+
+const isProduction = process.env.NODE_ENV === 'production';
+const SESSION_COOKIE = 'arena.sid';
+app.set('sessionCookieName', SESSION_COOKIE);
+
+// Behind a proxy/load balancer in production, trust it so secure cookies work over its HTTPS
+if (isProduction) app.set('trust proxy', 1);
 
 // Global Middleware
 // 				runs BEFORE route logic (.use)
@@ -51,6 +72,31 @@ app.use((req, res, next) => {
 	console.log(`[${time}] ${req.method} ${req.originalUrl}`);
 	next();
 });
+
+// Sessions: the cookie only holds a random ID; the session itself lives in the auth_sessions table
+app.use(session({
+	name: SESSION_COOKIE,
+	secret: process.env.SESSION_SECRET,
+	store: new PgSessionStore({ pool, tableName: 'auth_sessions' }),
+	resave: false,              // don't rewrite unchanged sessions
+	saveUninitialized: false,   // visitors don't get a session until they log in
+	rolling: true,              // each request pushes the expiry back, so active users stay logged in
+	cookie: {
+		httpOnly: true,         // JavaScript can't read the cookie (protects it from injected scripts)
+		sameSite: 'lax',        // not sent on cross-site form posts (blocks most CSRF)
+		secure: isProduction,   // HTTPS only in production
+		maxAge: 8 * 60 * 60 * 1000 // 8 hours of inactivity
+	}
+}));
+
+// Who is making this request? Sets req.user, or null for visitors
+app.use('/api', loadUser);
+
+// Login/logout/me must work without being logged in
+app.use('/api/auth', authRoutes);
+
+// From here on, visitors only get the public tournament reads (see PUBLIC_READS in middleware/auth.js)
+app.use('/api', requireLogin);
 
 app.use('/api/dbCheck', dbCheck);
 app.use('/api/events', eventsRoutes);

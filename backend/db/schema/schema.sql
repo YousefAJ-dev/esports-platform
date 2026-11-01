@@ -15,3 +15,5 @@
 \i backend/db/schema/012_match_details.sql
 \i backend/db/schema/010_team_users.sql
 \i backend/db/schema/011_user_roles.sql
+\i backend/db/schema/014_auth_sessions.sql
+\i backend/db/schema/015_ownership.sql

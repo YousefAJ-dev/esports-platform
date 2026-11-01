@@ -360,21 +360,26 @@ VALUES
 -- USERS
 -- ====================================
 
+-- Every seeded user's dev password is ArenaDev2026! (bcrypt hash below). Dev only, never use in production.
 INSERT INTO users (first_name, last_name, username, email, password_hash, is_active)
 VALUES 
-('Yousef', 'Alzubi', 'TheSysAdmin', 'noemail@noemail.com', 'dev_placeholder_hash', TRUE),
-('Oliver', 'Queen', 'O3OQueen', 'greenarrow@justice.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
-('Nara', 'Shikimaru', 'A2NShikimaru', 'lazyshinobi@hiddenleaf.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE), 
-('Albert', 'Einstein', 'TM1AEinstein', 'TheBrainiac@smartz.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE), 
-('The', 'Socrates', 'TM1TSocrates', 'TheThinker@philo.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
-('Wolfgang', 'Mozart', 'TM1WMozart', 'TheRhythm@music.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
-('Leonardo', 'DaVinci', 'TM1LDaVinci', 'MrLisa@artist.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
-('Morgan', 'Freeman', 'TM1AMFreeman', 'thenarrator@actor.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
-('Muhammad', 'Ali', 'TM1MAli', 'thefighter@sports.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
-('King', 'zues', 'TM1Kzues', 'godking@greekmyth.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
-('Goddess', 'Minerva', 'TM1GMinerva', 'goddesswisdom@romanmyth.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
-('Destroyer', 'Shiva', 'TM1DShiva', 'destroyer@hindude.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE),
-('Odin', 'AllFather', 'TM1OAllfather', 'allfather@norsemyth.com', '$2b$10$IyXFMLX79vBUswVHN\jTM.m9hzH8qtmPNIyQlCncMlVSQY70U5fbG', TRUE);
+('Yousef', 'Alzubi', 'TheSysAdmin', 'noemail@noemail.com', '$2b$10$1Svqtrf0uhP4X4Y7Rn46H.tKy0VXs1DW2xPJhYwR.A5GH5Nqol7JW', TRUE),
+('Oliver', 'Queen', 'O3OQueen', 'greenarrow@justice.com', '$2b$10$1Svqtrf0uhP4X4Y7Rn46H.tKy0VXs1DW2xPJhYwR.A5GH5Nqol7JW', TRUE),
+('Nara', 'Shikimaru', 'A2NShikimaru', 'lazyshinobi@hiddenleaf.com', '$2b$10$1Svqtrf0uhP4X4Y7Rn46H.tKy0VXs1DW2xPJhYwR.A5GH5Nqol7JW', TRUE), 
+('Albert', 'Einstein', 'TM1AEinstein', 'TheBrainiac@smartz.com', '$2b$10$1Svqtrf0uhP4X4Y7Rn46H.tKy0VXs1DW2xPJhYwR.A5GH5Nqol7JW', TRUE), 
+('The', 'Socrates', 'TM1TSocrates', 'TheThinker@philo.com', '$2b$10$1Svqtrf0uhP4X4Y7Rn46H.tKy0VXs1DW2xPJhYwR.A5GH5Nqol7JW', TRUE),
+('Wolfgang', 'Mozart', 'TM1WMozart', 'TheRhythm@music.com', '$2b$10$1Svqtrf0uhP4X4Y7Rn46H.tKy0VXs1DW2xPJhYwR.A5GH5Nqol7JW', TRUE),
+('Leonardo', 'DaVinci', 'TM1LDaVinci', 'MrLisa@artist.com', '$2b$10$1Svqtrf0uhP4X4Y7Rn46H.tKy0VXs1DW2xPJhYwR.A5GH5Nqol7JW', TRUE),
+('Morgan', 'Freeman', 'TM1AMFreeman', 'thenarrator@actor.com', '$2b$10$1Svqtrf0uhP4X4Y7Rn46H.tKy0VXs1DW2xPJhYwR.A5GH5Nqol7JW', TRUE),
+('Muhammad', 'Ali', 'TM1MAli', 'thefighter@sports.com', '$2b$10$1Svqtrf0uhP4X4Y7Rn46H.tKy0VXs1DW2xPJhYwR.A5GH5Nqol7JW', TRUE),
+('King', 'zues', 'TM1Kzues', 'godking@greekmyth.com', '$2b$10$1Svqtrf0uhP4X4Y7Rn46H.tKy0VXs1DW2xPJhYwR.A5GH5Nqol7JW', TRUE),
+('Goddess', 'Minerva', 'TM1GMinerva', 'goddesswisdom@romanmyth.com', '$2b$10$1Svqtrf0uhP4X4Y7Rn46H.tKy0VXs1DW2xPJhYwR.A5GH5Nqol7JW', TRUE),
+('Destroyer', 'Shiva', 'TM1DShiva', 'destroyer@hindude.com', '$2b$10$1Svqtrf0uhP4X4Y7Rn46H.tKy0VXs1DW2xPJhYwR.A5GH5Nqol7JW', TRUE),
+('Odin', 'AllFather', 'TM1OAllfather', 'allfather@norsemyth.com', '$2b$10$1Svqtrf0uhP4X4Y7Rn46H.tKy0VXs1DW2xPJhYwR.A5GH5Nqol7JW', TRUE);
+
+-- Seeded events were planned by the Organizer account (O3OQueen)
+UPDATE events SET created_by = 2;
+
 
 -- ====================================
 -- ROLES

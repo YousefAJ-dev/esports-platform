@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS auth_sessions;
 DROP TABLE IF EXISTS match_details;
 DROP TABLE IF EXISTS event_teams;
 DROP TABLE IF EXISTS session_teams;

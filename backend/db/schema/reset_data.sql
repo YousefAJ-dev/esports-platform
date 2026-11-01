@@ -1,6 +1,7 @@
 TRUNCATE TABLE
 	user_roles,
 	team_users,
+    auth_sessions,
     match_details,
     event_teams,
     session_teams,
