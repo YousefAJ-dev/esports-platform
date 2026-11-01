@@ -1,5 +1,5 @@
 -- reset db
-\i db/schema/reset_data.sql
+\i backend/db/schema/reset_data.sql
 
 -- ====================================
 -- MEMBERS
@@ -148,30 +148,30 @@ VALUES
 INSERT INTO sessions
 (event_id,scheduled_start,scheduled_end,actual_start,actual_end,session_type,status)
 VALUES
-(1,'2025-12-01T10:30'::timestamp AT TIME ZONE 'America/Chicago','2025-12-01T11:30'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Qualifier','Completed'),
-(1,'2025-12-01T11:30'::timestamp AT TIME ZONE 'America/Chicago','2025-12-01T12:30'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Qualifier','Completed'),
+(1,'2025-12-01T10:30'::timestamp AT TIME ZONE 'America/Chicago','2025-12-01T11:30'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Quarter-Finals','Completed'),
+(1,'2025-12-01T11:30'::timestamp AT TIME ZONE 'America/Chicago','2025-12-01T12:30'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Quarter-Finals','Completed'),
 (1,'2025-12-01T13:00'::timestamp AT TIME ZONE 'America/Chicago','2025-12-01T14:00'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Quarter-Finals','Completed'),
 (1,'2025-12-01T14:00'::timestamp AT TIME ZONE 'America/Chicago','2025-12-01T15:00'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Quarter-Finals','Completed'),
 
-(2,'2026-06-16T12:30'::timestamp AT TIME ZONE 'America/Chicago','2026-06-16T13:30'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Qualifier','Completed'),
-(2,'2026-06-16T13:30'::timestamp AT TIME ZONE 'America/Chicago','2026-06-16T14:30'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Qualifier','Completed'),
+(2,'2026-06-16T12:30'::timestamp AT TIME ZONE 'America/Chicago','2026-06-16T13:30'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Quarter-Finals','Completed'),
+(2,'2026-06-16T13:30'::timestamp AT TIME ZONE 'America/Chicago','2026-06-16T14:30'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Quarter-Finals','Completed'),
 (2,'2026-06-16T15:00'::timestamp AT TIME ZONE 'America/Chicago','2026-06-16T16:00'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Quarter-Finals','Completed'),
-(2,'2026-06-16T16:00'::timestamp AT TIME ZONE 'America/Chicago','2026-06-16T17:00'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Final','Completed'),
+(2,'2026-06-16T16:00'::timestamp AT TIME ZONE 'America/Chicago','2026-06-16T17:00'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Quarter-Finals','Completed'),
 
-(3,'2026-09-10T15:30'::timestamp AT TIME ZONE 'America/Chicago','2026-09-10T16:30'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Qualifier','In-Progress'),
-(3,'2026-09-10T16:30'::timestamp AT TIME ZONE 'America/Chicago','2026-09-10T17:30'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Qualifier','Upcoming'),
+(3,'2026-09-10T15:30'::timestamp AT TIME ZONE 'America/Chicago','2026-09-10T16:30'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Quarter-Finals','In-Progress'),
+(3,'2026-09-10T16:30'::timestamp AT TIME ZONE 'America/Chicago','2026-09-10T17:30'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Quarter-Finals','Upcoming'),
 (3,'2026-09-10T18:00'::timestamp AT TIME ZONE 'America/Chicago','2026-09-10T19:00'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Quarter-Finals','Upcoming'),
-(3,'2026-09-10T19:00'::timestamp AT TIME ZONE 'America/Chicago','2026-09-10T20:00'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Final','Upcoming'),
+(3,'2026-09-10T19:00'::timestamp AT TIME ZONE 'America/Chicago','2026-09-10T20:00'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Quarter-Finals','Upcoming'),
 
-(4,'2026-12-05T14:30'::timestamp AT TIME ZONE 'America/Chicago','2026-12-05T15:30'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Qualifier','Upcoming'),
-(4,'2026-12-05T15:30'::timestamp AT TIME ZONE 'America/Chicago','2026-12-05T16:30'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Qualifier','Upcoming'),
-(4,'2026-12-05T17:00'::timestamp AT TIME ZONE 'America/Chicago','2026-12-05T18:00'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Semi-Final','Upcoming'),
-(4,'2026-12-05T18:00'::timestamp AT TIME ZONE 'America/Chicago','2026-12-05T19:00'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Final','Upcoming'),
+(4,'2026-12-05T14:30'::timestamp AT TIME ZONE 'America/Chicago','2026-12-05T15:30'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Quarter-Finals','Upcoming'),
+(4,'2026-12-05T15:30'::timestamp AT TIME ZONE 'America/Chicago','2026-12-05T16:30'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Quarter-Finals','Upcoming'),
+(4,'2026-12-05T17:00'::timestamp AT TIME ZONE 'America/Chicago','2026-12-05T18:00'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Quarter-Finals','Upcoming'),
+(4,'2026-12-05T18:00'::timestamp AT TIME ZONE 'America/Chicago','2026-12-05T19:00'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Quarter-Finals','Upcoming'),
 
-(5,'2027-02-21T16:30'::timestamp AT TIME ZONE 'America/Chicago','2027-02-21T17:30'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Qualifier','Upcoming'),
+(5,'2027-02-21T16:30'::timestamp AT TIME ZONE 'America/Chicago','2027-02-21T17:30'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Quarter-Finals','Upcoming'),
 (5,'2027-02-21T17:30'::timestamp AT TIME ZONE 'America/Chicago','2027-02-21T18:30'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Quarter-Finals','Upcoming'),
-(5,'2027-02-21T19:00'::timestamp AT TIME ZONE 'America/Chicago','2027-02-21T20:00'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Semi-Final','Upcoming'),
-(5,'2027-02-21T20:00'::timestamp AT TIME ZONE 'America/Chicago','2027-02-21T21:00'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Final','Upcoming');
+(5,'2027-02-21T19:00'::timestamp AT TIME ZONE 'America/Chicago','2027-02-21T20:00'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Quarter-Finals','Upcoming'),
+(5,'2027-02-21T20:00'::timestamp AT TIME ZONE 'America/Chicago','2027-02-21T21:00'::timestamp AT TIME ZONE 'America/Chicago',NULL,NULL,'Quarter-Finals','Upcoming');
 
 
 -- ====================================
