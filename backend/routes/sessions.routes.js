@@ -4,11 +4,13 @@ const { getMissingFields } = require('../utils/validation');
 const pool = require('../db/pool');
 const { handleDbError } = require('../utils/dbErrors');
 const { matchListQuery } = require('../utils/matchQueries');
+const { canManageEvent, canManageMatch } = require('../middleware/permissions');
 const { RuleError, handleRuleError, parseMatchTeamIds, assertSessionEditable, assertTeamsCanPlay, assertWithinEvent, assertHasResults, setMatchTeams } = require('../utils/businessRules');
 
 
 // POST sessions
-router.post('/', async (req, res) => {
+// Only whoever manages the chosen event can add matches to it
+router.post('/', canManageEvent(req => req.body.event_id), async (req, res) => {
 
 	try {
 
@@ -181,7 +183,9 @@ router.get('/:id', async (req, res) => {
 
 		const result = await pool.query(
 			`
-			SELECT session_id, event_id, session_type, scheduled_start, scheduled_end, actual_start, actual_end, session_type, timezone, status
+			-- event_created_by lets the UI know who may edit this match
+			SELECT session_id, event_id, session_type, scheduled_start, scheduled_end, actual_start, actual_end, session_type, timezone, status,
+				(SELECT e.created_by FROM events e WHERE e.event_id = sessions.event_id) AS event_created_by
 			FROM sessions
 			WHERE session_id = $1
 			`, [id]
@@ -369,7 +373,7 @@ router.get('/:id/overview', async (req, res) => {
 
 
 // PUT api/sessions/:id/teams - replace the two teams playing a match
-router.put('/:id/teams', async (req, res) => {
+router.put('/:id/teams', canManageMatch(req => req.params.id), async (req, res) => {
 
 	const id = parseInt(req.params.id);
 
@@ -411,7 +415,7 @@ router.put('/:id/teams', async (req, res) => {
 
 
 // PUT api/sessions/:id/results - save every team's score/winner for a match in one transaction
-router.put('/:id/results', async (req, res) => {
+router.put('/:id/results', canManageMatch(req => req.params.id), async (req, res) => {
 
 	const id = parseInt(req.params.id);
 
@@ -480,7 +484,7 @@ router.put('/:id/results', async (req, res) => {
 
 
 // PATCH sessions
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', canManageMatch(req => req.params.id), async (req, res) => {
 
 	try {
 
@@ -616,7 +620,7 @@ router.patch('/:id', async (req, res) => {
 
 
 // DELETE sessions by id
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', canManageMatch(req => req.params.id), async (req, res) => {
 
 	try {
 

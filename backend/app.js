@@ -4,7 +4,7 @@ const cors = require('cors')
 const session = require('express-session');
 const PgSessionStore = require('connect-pg-simple')(session);
 const pool = require('./db/pool');
-const { loadUser, requireLogin } = require('./middleware/auth');
+const { loadUser, requireLogin, requireRole } = require('./middleware/auth');
 const authRoutes = require('./routes/auth.routes');
 
 const dbCheck = require('./routes/dbHealth.routes');
@@ -99,17 +99,21 @@ app.use('/api/auth', authRoutes);
 app.use('/api', requireLogin);
 
 app.use('/api/dbCheck', dbCheck);
+
+// Admin-only areas: staff accounts, role assignment, and the old direct-table routes
+// (requireRole() with no roles listed means Admin only)
+const adminOnly = requireRole();
 app.use('/api/events', eventsRoutes);
 app.use('/api/sessions', sessionsRoutes);
 app.use('/api/teams', teamsRoutes);
 app.use('/api/members', membersRoutes);
-app.use('/api/team_members', teamMembersRoutes);
-app.use('/api/session_teams', sessionTeamsRoutes);
-app.use('/api/match_details', matchDetailsRoutes);
-app.use('/api/users', usersRoutes);
-app.use('/api/team_users', teamUsersRoutes);
-app.use('/api/roles', rolesRoutes);
-app.use('/api/user_roles', userRolesRoutes);
+app.use('/api/team_members', adminOnly, teamMembersRoutes);
+app.use('/api/session_teams', adminOnly, sessionTeamsRoutes);
+app.use('/api/match_details', adminOnly, matchDetailsRoutes);
+app.use('/api/users', adminOnly, usersRoutes);
+app.use('/api/team_users', adminOnly, teamUsersRoutes);
+app.use('/api/roles', adminOnly, rolesRoutes);
+app.use('/api/user_roles', adminOnly, userRolesRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/standings', standingsRoutes);
 

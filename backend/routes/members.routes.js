@@ -4,10 +4,13 @@ const pool = require('../db/pool');
 
 const { getMissingFields } = require('../utils/validation');
 const { handleInUseError } = require('../utils/businessRules');
+const { requireRole } = require('../middleware/auth');
+const { canEditMember, adminOnlyFields } = require('../middleware/permissions');
 
 
 // api/members/ -- post member to members
-router.post("/", async (req, res) => {
+// Team Managers (and Admins) can register new players
+router.post("/", requireRole('Team Manager'), async (req, res) => {
 
 	try {
 
@@ -240,7 +243,8 @@ router.get('/:id/overview', async (req, res) => {
 
 
 // api/members/:id -- Update member by id
-router.patch("/:id", async (req, res) => {
+// Managers edit details of members on their roster; activating/deactivating is Admin-only
+router.patch("/:id", canEditMember(req => req.params.id), adminOnlyFields('is_active'), async (req, res) => {
 
 	try {
 
@@ -337,7 +341,7 @@ router.patch("/:id", async (req, res) => {
 });
 
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireRole(), async (req, res) => {
 
 	try {
 

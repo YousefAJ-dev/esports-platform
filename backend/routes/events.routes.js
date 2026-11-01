@@ -4,11 +4,14 @@ const pool = require('../db/pool'); // importing data base
 const { getMissingFields } = require('../utils/validation');
 const { matchListQuery } = require('../utils/matchQueries');
 const { handleRuleError, assertCanRegister, assertCanUnregister, assertEventFitsMatches, assertEventCanComplete } = require('../utils/businessRules');
+const { requireRole } = require('../middleware/auth');
+const { canManageEvent } = require('../middleware/permissions');
 
 
 // POST /api/events
 // This route creates a new event in the database
-router.post('/', async (req, res) => {
+// Organizers (and Admins) plan events; the creator becomes the event's owner
+router.post('/', requireRole('Organizer'), async (req, res) => {
 	try {
 
 		const {
@@ -49,7 +52,7 @@ router.post('/', async (req, res) => {
 		const result = await pool.query(
 			`
 			INSERT INTO events 
-				(event_name, description, location, start_on, end_on, timezone, status)
+				(event_name, description, location, start_on, end_on, timezone, status, created_by)
 			VALUES (
 				$1, 
 				$2, 
@@ -57,11 +60,13 @@ router.post('/', async (req, res) => {
 				$4::timestamp AT TIME ZONE $6, 
 				$5::timestamp AT TIME ZONE $6, 
 				$6, 
-				$7
+				$7,
+				$8
 			)
-			RETURNING event_id, event_name, start_on, end_on
+			RETURNING event_id, event_name, start_on, end_on, created_by
 			`
-			, [event_name, description, location, start_on, end_on, timezone, status]
+			// The defaults above were computed but never used, so a missing status failed the insert
+			, [event_name, description, location, start_on, end_on, eventTimeZone, eventStatus, req.user.user_id]
 		);
 
 		res.status(201).json(result.rows[0]);
@@ -88,7 +93,7 @@ router.get('/', async (_, res) => {
 
 	try {	// Query Database
 		const result = await pool.query(`
-			SELECT event_id, event_name, location, start_on, end_on, status
+			SELECT event_id, event_name, location, start_on, end_on, status, created_by
 			FROM events
 			ORDER BY start_on;	
 		`);
@@ -119,7 +124,7 @@ router.get('/:id', async (req, res) => {
 		const id = req.params.id;
 
 		const result = await pool.query(`
-			SELECT event_id, event_name, description, location, start_on, end_on, timezone, status
+			SELECT event_id, event_name, description, location, start_on, end_on, timezone, status, created_by
 			FROM events
 			WHERE event_id = $1;
 			`,
@@ -264,7 +269,7 @@ router.get('/:id/teams', async (req, res) => {
 
 
 // POST /api/events/:id/teams - register a team for the event
-router.post('/:id/teams', async (req, res) => {
+router.post('/:id/teams', canManageEvent(req => req.params.id), async (req, res) => {
 
 	try {
 
@@ -301,7 +306,7 @@ router.post('/:id/teams', async (req, res) => {
 
 
 // DELETE /api/events/:id/teams/:teamId - withdraw a team that isn't in any of the event's matches
-router.delete('/:id/teams/:teamId', async (req, res) => {
+router.delete('/:id/teams/:teamId', canManageEvent(req => req.params.id), async (req, res) => {
 
 	try {
 
@@ -463,7 +468,7 @@ router.get('/:id/overview', async (req, res) => {
 
 
 // DELETE api/events/:id
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", canManageEvent(req => req.params.id), async (req, res) => {
 
 	try {
 
@@ -504,7 +509,7 @@ router.delete("/:id", async (req, res) => {
 
 
 // PATCH using id
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', canManageEvent(req => req.params.id), async (req, res) => {
 
 	try {
 

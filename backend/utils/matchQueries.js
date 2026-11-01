@@ -8,6 +8,7 @@ function matchListQuery(whereClause, orderBy) {
 			s.session_id,
 			s.event_id,
 			e.event_name,
+			e.created_by AS event_created_by,
 			s.session_type,
 			s.scheduled_start,
 			s.scheduled_end,
@@ -44,7 +45,7 @@ function matchListQuery(whereClause, orderBy) {
 			AND st.team_id = md.team_id
 
 		${whereClause}
-		GROUP BY s.session_id, e.event_name
+		GROUP BY s.session_id, e.event_name, e.created_by
 		ORDER BY ${orderBy}
 	`;
 }

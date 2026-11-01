@@ -3,10 +3,14 @@ const router = express.Router();
 const pool = require("../db/pool");
 const { getMissingFields } = require('../utils/validation');
 const { handleRuleError, handleInUseError, assertCanJoinTeam, assertCanDeactivateTeam } = require('../utils/businessRules');
+const { requireRole } = require('../middleware/auth');
+const { canManageTeam, adminOnlyFields } = require('../middleware/permissions');
 
 
 // POST api/teams
-router.post('/', async (req, res) => {
+// Team Managers (and Admins) create teams. A Team Manager becomes the new team's manager,
+// and can only run one team at a time.
+router.post('/', requireRole('Team Manager'), async (req, res) => {
 
 	try {
 
@@ -26,20 +30,51 @@ router.post('/', async (req, res) => {
 
 		const { team_name, contact_email, is_active } = req.body;
 
-		const result = await pool.query(
-			`
-			INSERT INTO teams (team_name, contact_email, is_active)
-			VALUES ($1,$2,$3)
-			RETURNING team_id, team_name, created_on, contact_email, is_active
-			`,
-			[team_name, contact_email, is_active ?? true]
-		);
+		const becomesManager = req.user.roles.includes('Team Manager');
 
-		return res.status(201).json(result.rows[0]);
+		if (becomesManager && req.user.managed_team_id) {
+			return res.status(403).json({ error: "You already manage a team" });
+		}
+
+		// The team and its manager link are saved together
+		const client = await pool.connect();
+
+		try {
+
+			await client.query('BEGIN');
+
+			const result = await client.query(
+				`
+				INSERT INTO teams (team_name, contact_email, is_active)
+				VALUES ($1,$2,$3)
+				RETURNING team_id, team_name, created_on, contact_email, is_active
+				`,
+				[team_name, contact_email, is_active ?? true]
+			);
+
+			if (becomesManager) {
+				await client.query(
+					`INSERT INTO team_users (team_id, user_id, start_date) VALUES ($1, $2, CURRENT_DATE)`,
+					[result.rows[0].team_id, req.user.user_id]
+				);
+			}
+
+			await client.query('COMMIT');
+
+			return res.status(201).json(result.rows[0]);
+
+		} catch (error) {
+			await client.query('ROLLBACK');
+			throw error;
+		} finally {
+			client.release();
+		}
 
 	} catch (error) {
 
-		console.error("Error getting Teams:", error.message);
+		if (handleRuleError(error, res)) return;
+
+		console.error("Error creating team:", error.message);
 
 		return res.status(500).json({ error: "Internal Server Error" });
 
@@ -171,7 +206,7 @@ router.get('/:id/members', async (req, res) => {
 
 
 // POST api/teams/:id/members - add a member to this team's roster
-router.post('/:id/members', async (req, res) => {
+router.post('/:id/members', canManageTeam(req => req.params.id), async (req, res) => {
 
 	try {
 
@@ -189,19 +224,37 @@ router.post('/:id/members', async (req, res) => {
 
 		const { member_id, team_position, start_date } = req.body;
 
-		await assertCanJoinTeam(pool, id, member_id, team_position);
+		const client = await pool.connect();
 
-		// The partial unique indexes still catch two requests racing past the checks above
-		const result = await pool.query(
-			`
-			INSERT INTO team_members (team_id, member_id, start_date, team_position)
-			VALUES ($1, $2, COALESCE($3::date, CURRENT_DATE), $4)
-			RETURNING team_member_id, team_id, member_id, start_date, team_position
-			`,
-			[id, member_id, start_date || null, team_position]
-		);
+		try {
 
-		return res.status(201).json(result.rows[0]);
+			await client.query('BEGIN');
+
+			// Locking the team row makes concurrent adds wait their turn, so the position
+			// counts in assertCanJoinTeam can't be read by two requests at once
+			await client.query(`SELECT team_id FROM teams WHERE team_id = $1 FOR UPDATE`, [id]);
+
+			await assertCanJoinTeam(client, id, member_id, team_position);
+
+			const result = await client.query(
+				`
+				INSERT INTO team_members (team_id, member_id, start_date, team_position)
+				VALUES ($1, $2, COALESCE($3::date, CURRENT_DATE), $4)
+				RETURNING team_member_id, team_id, member_id, start_date, team_position
+				`,
+				[id, member_id, start_date || null, team_position]
+			);
+
+			await client.query('COMMIT');
+
+			return res.status(201).json(result.rows[0]);
+
+		} catch (error) {
+			await client.query('ROLLBACK');
+			throw error;
+		} finally {
+			client.release();
+		}
 
 	} catch (error) {
 
@@ -218,7 +271,7 @@ router.post('/:id/members', async (req, res) => {
 
 // DELETE api/teams/:id/members/:memberId - remove a member from the roster.
 // Ends the membership instead of deleting it so team history is kept.
-router.delete('/:id/members/:memberId', async (req, res) => {
+router.delete('/:id/members/:memberId', canManageTeam(req => req.params.id), async (req, res) => {
 
 	try {
 
@@ -413,7 +466,7 @@ router.get('/:id/overview', async (req, res) => {
 
 
 // PATCH api/teams/:id
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', canManageTeam(req => req.params.id), adminOnlyFields('is_active'), async (req, res) => {
 
 	try {
 
@@ -477,7 +530,7 @@ router.patch('/:id', async (req, res) => {
 
 
 // DELETE api/teams/:id
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireRole(), async (req, res) => {
 
 	try {
 

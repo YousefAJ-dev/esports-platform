@@ -3,8 +3,15 @@
 
 const TEAMS_PER_MATCH = 2;
 const TEAM_POSITIONS = ['Player', 'Captain', 'Substitute'];
+
+// Roster shape: up to 6 members. A full lineup (needed to compete) is a Captain + 4 Players;
+// the Substitute is optional.
+const POSITION_LIMITS = { Captain: 1, Player: 4, Substitute: 1 };
+const LINEUP_PLAYERS = 4;
 const UNIQUE_VIOLATION = '23505';
 const FK_VIOLATION = '23503';
+
+const { hasRole, isAdmin } = require('../middleware/auth');
 
 class RuleError extends Error {
 	constructor(status, message) {
@@ -30,6 +37,14 @@ function handleRuleError(error, res) {
 
 	if (error.code === UNIQUE_VIOLATION && error.constraint === 'uq_session_team') {
 		return res.status(409).json({ error: "Team is already in this match" });
+	}
+
+	if (error.code === UNIQUE_VIOLATION && error.constraint === 'uq_team_substitute') {
+		return res.status(409).json({ error: "This team already has a substitute" });
+	}
+
+	if (error.code === UNIQUE_VIOLATION && error.constraint === 'uq_active_team_manager') {
+		return res.status(409).json({ error: "This user already manages a team" });
 	}
 
 	if (error.code === UNIQUE_VIOLATION && error.constraint === 'uq_event_team') {
@@ -131,6 +146,8 @@ async function assertTeamsCanPlay(db, sessionId, teamIds) {
 				WHERE et.event_id = cur.event_id
 					AND et.team_id = t.team_id
 			) AS is_registered,
+			lineup.captains,
+			lineup.players,
 			clash.session_id AS clash_session_id
 
 		FROM teams t
@@ -155,6 +172,16 @@ async function assertTeamsCanPlay(db, sessionId, teamIds) {
 			LIMIT 1
 		) clash ON TRUE
 
+		-- Current lineup, to make sure each team can field a full squad
+		CROSS JOIN LATERAL (
+			SELECT
+				COUNT(*) FILTER (WHERE tm.team_position = 'Captain')::INT AS captains,
+				COUNT(*) FILTER (WHERE tm.team_position = 'Player')::INT AS players
+			FROM team_members tm
+			WHERE tm.team_id = t.team_id
+				AND tm.end_date IS NULL
+		) lineup
+
 		WHERE t.team_id = ANY($1::int[])
 		`,
 		[teamIds, sessionId]
@@ -170,6 +197,8 @@ async function assertTeamsCanPlay(db, sessionId, teamIds) {
 		if (!team.is_active) {
 			throw new RuleError(400, `${team.team_name} is inactive and cannot be added to a match`);
 		}
+
+		assertFullLineup(team.team_name, team.captains, team.players);
 
 		if (!team.is_registered) {
 			throw new RuleError(400, `${team.team_name} is not registered for this event`);
@@ -299,12 +328,19 @@ async function assertCanRegister(db, eventId, teamId) {
 		`
 		SELECT
 			(SELECT status FROM events WHERE event_id = $1) AS event_status,
-			(SELECT COALESCE(is_active, TRUE) FROM teams WHERE team_id = $2) AS team_active
+			(SELECT COALESCE(is_active, TRUE) FROM teams WHERE team_id = $2) AS team_active,
+			(SELECT team_name FROM teams WHERE team_id = $2) AS team_name,
+			COUNT(tm.team_member_id) FILTER (WHERE tm.team_position = 'Captain')::INT AS captains,
+			COUNT(tm.team_member_id) FILTER (WHERE tm.team_position = 'Player')::INT AS players
+		FROM (SELECT 1) AS one
+		LEFT JOIN team_members tm
+			ON tm.team_id = $2
+			AND tm.end_date IS NULL
 		`,
 		[eventId, teamId]
 	);
 
-	const { event_status, team_active } = result.rows[0];
+	const { event_status, team_active, team_name, captains, players } = result.rows[0];
 
 	if (event_status === null) throw new RuleError(404, `Could not find Event ID: ${eventId}`);
 	if (team_active === null) throw new RuleError(404, `Could not find Team ID: ${teamId}`);
@@ -312,6 +348,7 @@ async function assertCanRegister(db, eventId, teamId) {
 		throw new RuleError(400, `Teams cannot register for a ${event_status.toLowerCase()} event`);
 	}
 	if (!team_active) throw new RuleError(400, "Inactive teams cannot register for an event");
+	assertFullLineup(team_name, captains, players);
 }
 
 
@@ -338,8 +375,19 @@ async function assertCanUnregister(db, eventId, teamId) {
 }
 
 
+// A team needs a Captain and 4 Players before it can register for events or play matches
+function assertFullLineup(teamName, captains, players) {
+
+	if (captains < 1 || players < LINEUP_PLAYERS) {
+		throw new RuleError(400, `${teamName} needs a Captain and ${LINEUP_PLAYERS} Players to compete (has ${captains} Captain, ${players} Players)`);
+	}
+}
+
+
 // A member can join a team only if both are active, the member isn't on a team already,
-// and the team doesn't already have a captain when joining as one. Checked in one query.
+// and that position still has room (1 Captain, 4 Players, 1 Substitute). Checked in one query.
+// Callers adding to a roster should lock the team row first (SELECT ... FOR UPDATE) so two
+// requests can't both take the last open spot.
 async function assertCanJoinTeam(db, teamId, memberId, teamPosition) {
 
 	if (!TEAM_POSITIONS.includes(teamPosition)) {
@@ -359,25 +407,99 @@ async function assertCanJoinTeam(db, teamId, memberId, teamPosition) {
 				WHERE tm.member_id = $2
 					AND tm.end_date IS NULL
 			) AS current_team,
-			EXISTS (
-				SELECT 1
+			(
+				SELECT COUNT(*)::INT
 				FROM team_members
 				WHERE team_id = $1
-					AND team_position = 'Captain'
+					AND team_position = $3
 					AND end_date IS NULL
-			) AS has_captain
+			) AS position_count
 		`,
-		[teamId, memberId]
+		[teamId, memberId, teamPosition]
 	);
 
-	const { team_active, member_active, current_team, has_captain } = result.rows[0];
+	const { team_active, member_active, current_team, position_count } = result.rows[0];
 
 	if (team_active === null) throw new RuleError(404, `Could not find Team ID: ${teamId}`);
 	if (member_active === null) throw new RuleError(404, `Could not find Member ID: ${memberId}`);
 	if (!team_active) throw new RuleError(400, "Players cannot be added to an inactive team");
 	if (!member_active) throw new RuleError(400, "Inactive members cannot be added to a team");
 	if (current_team) throw new RuleError(409, `Member is already on ${current_team}`);
-	if (teamPosition === 'Captain' && has_captain) throw new RuleError(409, "This team already has a captain");
+	if (position_count >= POSITION_LIMITS[teamPosition]) {
+		const limit = POSITION_LIMITS[teamPosition];
+		throw new RuleError(409, `This team already has ${limit === 1 ? 'a' : limit} ${teamPosition.toLowerCase()}${limit === 1 ? '' : 's'}`);
+	}
+}
+
+
+// ---- Ownership checks (see docs/RBAC.md) ------------------------------------
+// Roles say what KIND of thing you can do; these say WHICH records you can do it to.
+// Each throws a 403 RuleError, or a 404 if the record doesn't exist. Admin always passes.
+
+// Organizers manage only the events they created
+async function assertCanManageEvent(db, user, eventId) {
+
+	if (isAdmin(user)) return;
+
+	if (!hasRole(user, 'Organizer')) {
+		throw new RuleError(403, "Only Organizers and Admins can manage events");
+	}
+
+	const result = await db.query(`SELECT created_by FROM events WHERE event_id = $1`, [eventId]);
+
+	if (result.rows.length === 0) throw new RuleError(404, `Could not find Event ID: ${eventId}`);
+
+	if (result.rows[0].created_by !== user.user_id) {
+		throw new RuleError(403, "You can only manage events you created");
+	}
+}
+
+
+// A match belongs to its event, so whoever manages the event manages its matches
+async function assertCanManageMatch(db, user, sessionId) {
+
+	if (isAdmin(user)) return;
+
+	const result = await db.query(`SELECT event_id FROM sessions WHERE session_id = $1`, [sessionId]);
+
+	if (result.rows.length === 0) throw new RuleError(404, `Could not find Session ID: ${sessionId}`);
+
+	await assertCanManageEvent(db, user, result.rows[0].event_id);
+}
+
+
+// Team Managers manage only the team they're assigned to (req.user.managed_team_id from team_users)
+function assertCanManageTeam(user, teamId) {
+
+	if (isAdmin(user)) return;
+
+	if (!hasRole(user, 'Team Manager')) {
+		throw new RuleError(403, "Only Team Managers and Admins can manage teams");
+	}
+
+	if (user.managed_team_id !== teamId) {
+		throw new RuleError(403, "You can only manage your own team");
+	}
+}
+
+
+// Team Managers can edit a member's details only while that member is on their roster
+async function assertCanEditMember(db, user, memberId) {
+
+	if (isAdmin(user)) return;
+
+	if (!hasRole(user, 'Team Manager')) {
+		throw new RuleError(403, "Only Team Managers and Admins can edit members");
+	}
+
+	const result = await db.query(
+		`SELECT team_id FROM team_members WHERE member_id = $1 AND end_date IS NULL`,
+		[memberId]
+	);
+
+	if (!user.managed_team_id || result.rows[0]?.team_id !== user.managed_team_id) {
+		throw new RuleError(403, "You can only edit members on your own team");
+	}
 }
 
 
@@ -397,4 +519,8 @@ module.exports = {
 	assertCanRegister,
 	assertCanUnregister,
 	assertCanJoinTeam,
+	assertCanManageEvent,
+	assertCanManageMatch,
+	assertCanManageTeam,
+	assertCanEditMember,
 };
