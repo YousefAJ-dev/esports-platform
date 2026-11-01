@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db/pool'); // importing data base
 const { getMissingFields } = require('../utils/validation');
+const { matchListQuery } = require('../utils/matchQueries');
 
 
 // POST /api/events
@@ -194,48 +195,9 @@ router.get('/:id/matches', async (req, res) => {
 
 		if (isNaN(id)) { return res.status(400).json({ error: "Invalid event ID" }) };
 
+		// Enums sort in declaration order, so rounds come back Qualifier -> Final
 		const result = await pool.query(
-			`
-			SELECT
-				s.session_id,
-				s.event_id,
-				s.session_type,
-				s.scheduled_start,
-				s.scheduled_end,
-				s.status,
-
-				-- Teams are folded into a JSON array so one query returns everything
-				COALESCE(
-					json_agg(
-						json_build_object(
-							'team_id', t.team_id,
-							'team_name', t.team_name,
-							'score', md.score,
-							'is_winner', COALESCE(md.is_winner, FALSE)
-						)
-						ORDER BY st.session_team_id
-					) FILTER (WHERE t.team_id IS NOT NULL),
-					'[]'
-				) AS teams
-
-			FROM sessions s
-
-			LEFT JOIN session_teams st
-				ON s.session_id = st.session_id
-
-			LEFT JOIN teams t
-				ON st.team_id = t.team_id
-
-			LEFT JOIN match_details md
-				ON st.session_id = md.session_id
-				AND st.team_id = md.team_id
-
-			WHERE s.event_id = $1
-			GROUP BY s.session_id
-
-			-- Enums sort in declaration order, so rounds come back Qualifier -> Final
-			ORDER BY s.session_type, s.scheduled_start
-			`,
+			matchListQuery('WHERE s.event_id = $1', 's.session_type, s.scheduled_start'),
 			[id]
 		);
 

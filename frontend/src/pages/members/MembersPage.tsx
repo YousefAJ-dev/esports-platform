@@ -1,8 +1,58 @@
 import { Link } from "react-router";
 import { getMembers } from "../../api/membersApi";
-import MemberCard from "../../components/ui/MemberCard";
+import DataTable, { type Column } from "../../components/ui/DataTable";
+import ListToolbar from "../../components/ui/ListToolbar";
+import PageHeader from "../../components/ui/PageHeader";
 import StatusMessage from "../../components/ui/StatusMessage";
+import StatusPill from "../../components/ui/StatusPill";
 import { useAsyncData } from "../../hooks/useAsyncData";
+import { byText, useFilteredList } from "../../hooks/useFilteredList";
+import type { MemberSummary } from "../../types/members";
+
+const COLUMNS: Column<MemberSummary>[] = [
+	{ header: "Display Name", render: member => member.display_name },
+	{ header: "Real Name", render: member => member.real_name, className: "hidden sm:table-cell" },
+	{
+		header: "Team",
+		render: member => member.team_id
+			? <Link to={`/teams/${member.team_id}`} onClick={e => e.stopPropagation()} className="hover:text-purple-300">{member.team_name}</Link>
+			: <span className="text-slate-500">Free agent</span>
+	},
+	{ header: "Status", render: member => <StatusPill status={member.is_active ? "Active" : "Inactive"} /> },
+];
+
+function MembersList({ members }: { members: MemberSummary[] }) {
+
+	const list = useFilteredList(members, {
+		searchText: member => `${member.display_name} ${member.real_name} ${member.team_name ?? ""}`,
+		getStatus: member => member.is_active ? "Active" : "Inactive",
+		statusOrder: ["Active", "Inactive"],
+		sorts: [
+			{ label: "Display name A-Z", compare: byText(member => member.display_name) },
+			{ label: "Real name A-Z", compare: byText(member => member.real_name) },
+			{ label: "Team", compare: byText(member => member.team_name ?? "~") }, // free agents last
+		]
+	});
+
+	return (
+		<section className="mx-auto max-w-7xl space-y-6">
+			<PageHeader
+				title="Members"
+				description="Players registered on the platform and the team they're on."
+				count={members.length}
+				action={{ label: "Add Member", to: "/members/new" }}
+			/>
+
+			<ListToolbar list={list} placeholder="Search by name or team..." />
+
+			{list.results.length === 0 ? (
+				<div className="stat-card text-slate-400">No members match your filters.</div>
+			) : (
+				<DataTable items={list.results} columns={COLUMNS} getKey={member => member.member_id} getLink={member => `/members/${member.member_id}`} />
+			)}
+		</section>
+	);
+}
 
 function MembersPage() {
 
@@ -12,54 +62,7 @@ function MembersPage() {
 		return <StatusMessage isLoading={isLoading} errorMsg={errorMsg} loadingText="Loading members..." />;
 	}
 
-	return (
-		<section className="main-content-layout">
-			<div className="mx-auto max-w-7xl space-y-8">
-
-				{/* Header */}
-				<div className="header-box">
-					<p className="text-sm font-medium text-purple-300">
-						Members
-					</p>
-
-					<h1 className="header-text">
-						Platform Members
-					</h1>
-
-					<p className="mt-2 text-slate-400">
-						An overview of the members that belong to this platform.
-					</p>
-				</div>
-
-				{/* Summary Bar */}
-				<div className="stat-card">
-					<p className="stat-title">Total Members</p>
-					<p className="mt-1 text-3xl font-bold text-white">
-						{members.length}
-					</p>
-				</div>
-
-				<div className="flex justify-end">
-					<Link to="/members/new" className="green-btn green-btn-clickable">
-						Add New
-					</Link>
-				</div>
-
-				{/* Members Grid */}
-				<main>
-					{members.length === 0 ? (
-						<div className="rounded-xl border border-slate-800 bg-slate-900 p-6 text-slate-400">
-							No members found.
-						</div>
-					) : (
-						<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-							{members.map(member => <MemberCard key={member.member_id} member={member} />)}
-						</div>
-					)}
-				</main>
-			</div>
-		</section>
-	);
+	return <MembersList members={members} />;
 }
 
 export default MembersPage;

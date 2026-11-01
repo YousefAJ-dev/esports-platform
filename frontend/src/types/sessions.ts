@@ -39,10 +39,6 @@ export type SessionOverview = {
 	player_count_2: number,
 };
 
-export type SessionCardProp = {
-	session: SessionSummary;
-};
-
 // A team as it appears inside a match, with its result if one was recorded
 export type MatchTeam = {
 	team_id: number,
@@ -51,13 +47,15 @@ export type MatchTeam = {
 	is_winner: boolean
 };
 
-// One match from GET /events/:id/matches
+// One match from GET /sessions or GET /events/:id/matches
 export type EventMatch = {
 	session_id: number,
 	event_id: number,
+	event_name: string,
 	session_type: string,
 	scheduled_start: string,
 	scheduled_end: string,
+	timezone: string,
 	status: string,
 	teams: MatchTeam[]
 };

@@ -1,75 +1,60 @@
-import { SessionCard } from "../../components/ui/SessionCard"
 import { getSessions } from "../../api/sessionsApi";
-import { Link } from "react-router";
+import ListToolbar from "../../components/ui/ListToolbar";
+import MatchCard from "../../components/ui/MatchCard";
+import PageHeader from "../../components/ui/PageHeader";
 import StatusMessage from "../../components/ui/StatusMessage";
 import { useAsyncData } from "../../hooks/useAsyncData";
+import { byDate, useFilteredList } from "../../hooks/useFilteredList";
+import type { Crumb } from "../../types/navigation";
+import type { EventMatch } from "../../types/sessions";
+
+const STATUSES = ["Upcoming", "In-Progress", "Completed", "Cancelled"];
+const TRAIL: Crumb[] = [{ label: "Matches", to: "/sessions" }];
+
+function MatchesList({ matches }: { matches: EventMatch[] }) {
+
+	const list = useFilteredList(matches, {
+		// Team names are searchable so "Titans" finds every match a team played
+		searchText: match => `${match.event_name} ${match.session_type} ${match.teams.map(team => team.team_name).join(" ")}`,
+		getStatus: match => match.status,
+		statusOrder: STATUSES,
+		sorts: [
+			{ label: "Soonest first", compare: byDate(match => match.scheduled_start) },
+			{ label: "Latest first", compare: byDate(match => match.scheduled_start, -1) },
+		]
+	});
+
+	return (
+		<section className="mx-auto max-w-7xl space-y-6">
+			<PageHeader
+				title="Matches"
+				description="Every match across all events, with teams and scores."
+				count={matches.length}
+				action={{ label: "Add Match", to: "/sessions/new" }}
+			/>
+
+			<ListToolbar list={list} placeholder="Search by event, round or team..." />
+
+			{list.results.length === 0 ? (
+				<div className="stat-card text-slate-400">No matches match your filters.</div>
+			) : (
+				<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+					{list.results.map(match => <MatchCard key={match.session_id} match={match} trail={TRAIL} showEvent />)}
+				</div>
+			)}
+		</section>
+	);
+}
 
 function SessionsPage() {
 
-	const { data: sessions, errorMsg, isLoading } = useAsyncData(getSessions, "Failed to load match data", "sessions");
+	const { data: matches, errorMsg, isLoading } = useAsyncData(getSessions, "Failed to load match data", "sessions");
 
-	if (isLoading || errorMsg || !sessions) {
+	if (isLoading || errorMsg || !matches) {
 		return <StatusMessage isLoading={isLoading} errorMsg={errorMsg} loadingText="Loading matches..." />;
 	}
 
-	const sessionsList = sessions.map( session => (
-		<SessionCard
-			key={session.session_id}
-			session={session}
-		/>));
-
-	return(
-		<section className="main-content-layout">
-			<div className="mx-auto max-w-7xl space-y-8">
-
-				{/* Header */}
-				<div className="header-box">
-					<p className="text-sm font-medium text-purple-300">
-						Matches
-					</p>
-					<h1 className="header-text">
-						Tournament Matches
-					</h1>
-					<p className="mt-2 text-slate-400">
-						An overview of the matches played across all events.
-					</p>
-				</div>
-
-
-				{/* Summary Bar */}
-				<div className="stat-card">
-					<p className="stat-title">
-						Total Matches
-					</p>
-					<p className="mt-1 text-3xl font-bold text-white">
-						{sessions.length}
-					</p>
-				</div>
-
-				<div className="flex justify-end">
-					<Link 
-					to={ `/sessions/new` }
-					className="green-btn green-btn-clickable"
-					>
-						Add New
-					</Link>
-				</div>
-
-				{/* Match Details */}
-				{sessions.length === 0 ? (
-						<div className="rounded-xl border border-slate-800 bg-slate-900 p-6 text-slate-400">
-							No matches found.
-						</div>
-					) : (
-				<div 
-					className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
-				>
-					{sessionsList}
-				</div>
-				)}
-			</div>
-		</section>
-	);
+	return <MatchesList matches={matches} />;
 }
 
 export default SessionsPage;

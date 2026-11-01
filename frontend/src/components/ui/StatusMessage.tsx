@@ -8,7 +8,7 @@ type StatusMessageProps = {
 export function StatusMessage({ isLoading, errorMsg, loadingText }: StatusMessageProps) {
 
 	return (
-		<section className="min-h-screen bg-slate-950 p-6 text-slate-100">
+		<section>
 			{isLoading
 				? <p className="text-purple-300">{loadingText}</p>
 				: <div className="stat-card">{errorMsg}</div>}

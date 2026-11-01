@@ -58,9 +58,15 @@ router.get("/", async (_, res) => {
 
 		const result = await pool.query(
 			`
-			SELECT member_id, real_name, display_name, is_active
-			FROM members
-			ORDER BY member_id
+			-- Current team comes from the open membership (at most one, enforced by uq_active_team_member)
+			SELECT m.member_id, m.real_name, m.display_name, m.is_active, t.team_id, t.team_name
+			FROM members m
+			LEFT JOIN team_members tm
+				ON m.member_id = tm.member_id
+				AND tm.end_date IS NULL
+			LEFT JOIN teams t
+				ON tm.team_id = t.team_id
+			ORDER BY m.member_id
 			`
 		);
 

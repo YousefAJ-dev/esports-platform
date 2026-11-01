@@ -77,8 +77,9 @@
 	.header-text {
 		@apply mt-2 text-4xl font-bold text-white
 	}
+	/* Page wrapper; the layout's <main> already provides padding and background */
 	.main-content-layout{
-		@apply min-h-screen bg-slate-950 p-6 text-slate-100
+		@apply block
 	}
 
 	.green-btn {

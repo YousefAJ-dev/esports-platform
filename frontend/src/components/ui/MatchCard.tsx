@@ -7,11 +7,13 @@ import StatusPill from "./StatusPill";
 type MatchCardProps = {
 	match: EventMatch,
 	trail: Crumb[],
-	showRound?: boolean
+	showRound?: boolean,
+	// On the all-matches list the card also names its event and round
+	showEvent?: boolean
 };
 
 // Compact clickable match: each team with its score, winner highlighted
-export function MatchCard({ match, trail, showRound = false }: MatchCardProps) {
+export function MatchCard({ match, trail, showRound = false, showEvent = false }: MatchCardProps) {
 
 	return (
 		<Link
@@ -25,6 +27,13 @@ export function MatchCard({ match, trail, showRound = false }: MatchCardProps) {
 				</p>
 				<StatusPill status={match.status} />
 			</div>
+
+			{showEvent && (
+				<div className="mt-2">
+					<p className="font-semibold text-white">{match.event_name}</p>
+					<p className="light-text">{match.session_type}</p>
+				</div>
+			)}
 
 			<div className="mt-3 space-y-2">
 				{match.teams.length === 0 ? (

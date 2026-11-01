@@ -35,7 +35,7 @@ export function CreateMemberPage() {
 	};
 
 	return (
-		<div className="min-h-screen p-6">
+		<div>
 			<section className="mx-auto max-w-6xl space-y-8">
 				<div className="header-box">
 					<h1 className="header-text">Create Member</h1>

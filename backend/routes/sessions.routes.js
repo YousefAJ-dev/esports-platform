@@ -3,6 +3,7 @@ const router = express.Router();
 const { getMissingFields } = require('../utils/validation');
 const pool = require('../db/pool');
 const { handleDbError } = require('../utils/dbErrors');
+const { matchListQuery } = require('../utils/matchQueries');
 const { handleRuleError, parseMatchTeamIds, assertSessionEditable, assertTeamsCanPlay, setMatchTeams } = require('../utils/businessRules');
 
 
@@ -144,19 +145,8 @@ router.get('/', async (_, res) => {
 
 	try {
 
-		const result = await pool.query(
-			`
-			SELECT 
-				session_id,
-				event_id, 
-				scheduled_start, 
-				scheduled_end, 
-				session_type, 
-				status
-			FROM sessions
-			ORDER BY session_id
-			`
-		);
+		// Each match comes with its event name and teams so the list can show them without extra requests
+		const result = await pool.query(matchListQuery('', 's.scheduled_start, s.session_id'));
 
 		return res.json(result.rows);
 

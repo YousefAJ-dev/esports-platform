@@ -4,7 +4,10 @@ export type MemberSummary = {
 	display_name: string,
 	date_of_birth?: string,
 	created_on?: string,
-	is_active: boolean
+	is_active: boolean,
+	// Current team, only included in the members list
+	team_id?: number | null,
+	team_name?: string | null
 };
 
 export type MemberOverview = {

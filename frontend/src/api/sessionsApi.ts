@@ -1,8 +1,9 @@
-import type { CreateSessionPayload, MatchResult, MatchResultPayload, MatchTeamsPayload, SessionOverview, SessionSummary, SessionTeam, UpdateSessionPayload } from "../types/sessions";
+import type { CreateSessionPayload, EventMatch, MatchResult, MatchResultPayload, MatchTeamsPayload, SessionOverview, SessionSummary, SessionTeam, UpdateSessionPayload } from "../types/sessions";
 import { apiRequest } from "./apiClient";
 
-export function getSessions(): Promise<SessionSummary[]> {
-	return apiRequest<SessionSummary[]>('/sessions');
+// Every match with its event name, teams and scores
+export function getSessions(): Promise<EventMatch[]> {
+	return apiRequest<EventMatch[]>('/sessions');
 }
 
 export function getSessionByID(id:string | undefined): Promise<SessionSummary>{

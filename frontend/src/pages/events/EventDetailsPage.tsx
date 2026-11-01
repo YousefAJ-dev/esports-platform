@@ -47,7 +47,7 @@ export function EventDetailPage() {
 	const { event, overview, matches } = data;
 
 	return (
-	<div className="min-h-screen bg-slate-950 p-6 text-slate-100">
+	<div>
 		<div className="mx-auto max-w-6xl space-y-8">
 
 			<Breadcrumbs trail={trail} current={event.event_name} />

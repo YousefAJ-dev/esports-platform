@@ -94,7 +94,7 @@ export function CreateSessionPage() {
 
 
 	return (
-		<div className="min-h-screen p-6">
+		<div>
 			<section className="mx-auto max-w-6xl space-y-8">
 
 				{/* SECTION HEADER */}
