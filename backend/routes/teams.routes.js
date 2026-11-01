@@ -90,9 +90,21 @@ router.get('/', async (_, res) => {
 
 		const result = await pool.query(
 			`
-			SELECT team_id, team_name, contact_email, is_active
-			FROM teams
-			ORDER BY team_id
+			SELECT
+				t.team_id,
+				t.team_name,
+				t.contact_email,
+				t.is_active,
+				-- Current manager, so Admins can see which teams are free to assign
+				tu.user_id AS manager_user_id,
+				CONCAT_WS(' ', u.first_name, u.last_name) AS manager_name
+			FROM teams t
+			LEFT JOIN team_users tu
+				ON t.team_id = tu.team_id
+				AND tu.end_date IS NULL
+			LEFT JOIN users u
+				ON tu.user_id = u.user_id
+			ORDER BY t.team_id
 			`
 		);
 

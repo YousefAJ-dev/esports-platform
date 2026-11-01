@@ -432,6 +432,106 @@ async function assertCanJoinTeam(db, teamId, memberId, teamPosition) {
 }
 
 
+// ---- Role and manager assignment (Admin-only routes) -------------------------
+
+// New role set for a user. Guards against locking everyone out: an Admin can't remove their
+// own Admin role, and the last active Admin can't lose it. Returns the role names being granted.
+async function assertCanSetRoles(db, actor, userId, roleIds) {
+
+	if (!Array.isArray(roleIds) || roleIds.some(roleId => !Number.isInteger(roleId))) {
+		throw new RuleError(400, "role_ids must be a list of role IDs");
+	}
+
+	const result = await db.query(
+		`
+		SELECT
+			(SELECT COUNT(*)::INT FROM users WHERE user_id = $1) AS user_exists,
+			ARRAY(SELECT role_name FROM roles WHERE role_id = ANY($2::int[])) AS new_roles,
+			(SELECT COUNT(*)::INT FROM roles WHERE role_id = ANY($2::int[])) AS found,
+			EXISTS (
+				SELECT 1
+				FROM user_roles ur
+				JOIN roles r ON ur.role_id = r.role_id
+				WHERE ur.user_id = $1 AND r.role_name = 'Admin'
+			) AS is_admin_now,
+			(
+				SELECT COUNT(*)::INT
+				FROM user_roles ur
+				JOIN roles r ON ur.role_id = r.role_id
+				JOIN users u ON ur.user_id = u.user_id
+				WHERE r.role_name = 'Admin' AND u.is_active AND u.user_id <> $1
+			) AS other_admins
+		`,
+		[userId, roleIds]
+	);
+
+	const { user_exists, new_roles, found, is_admin_now, other_admins } = result.rows[0];
+
+	if (!user_exists) throw new RuleError(404, `Could not find User ID: ${userId}`);
+	if (found !== new Set(roleIds).size) throw new RuleError(400, "One or more roles don't exist");
+
+	const losesAdmin = is_admin_now && !new_roles.includes('Admin');
+
+	if (losesAdmin && actor.user_id === userId) {
+		throw new RuleError(400, "You can't remove your own Admin role");
+	}
+
+	if (losesAdmin && other_admins === 0) {
+		throw new RuleError(400, "This is the last active Admin, so the Admin role can't be removed");
+	}
+
+	return new_roles;
+}
+
+
+// A team can be assigned to a user who has the Team Manager role, and only if no one else
+// is managing it right now (one manager per team, one team per manager)
+async function assertCanAssignTeam(db, userId, teamId) {
+
+	const result = await db.query(
+		`
+		SELECT
+			EXISTS (
+				SELECT 1
+				FROM user_roles ur
+				JOIN roles r ON ur.role_id = r.role_id
+				WHERE ur.user_id = $1 AND r.role_name = 'Team Manager'
+			) AS is_manager,
+			(SELECT COALESCE(is_active, TRUE) FROM teams WHERE team_id = $2) AS team_active,
+			(
+				SELECT CONCAT_WS(' ', u.first_name, u.last_name)
+				FROM team_users tu
+				JOIN users u ON tu.user_id = u.user_id
+				WHERE tu.team_id = $2 AND tu.end_date IS NULL AND tu.user_id <> $1
+			) AS other_manager
+		`,
+		[userId, teamId]
+	);
+
+	const { is_manager, team_active, other_manager } = result.rows[0];
+
+	if (!is_manager) throw new RuleError(400, "Give this user the Team Manager role before assigning a team");
+	if (team_active === null) throw new RuleError(404, `Could not find Team ID: ${teamId}`);
+	if (!team_active) throw new RuleError(400, "Inactive teams can't be assigned a manager");
+	if (other_manager) throw new RuleError(409, `This team is already managed by ${other_manager}`);
+}
+
+
+// Ends a manager's current team assignment (kept as history, like rosters)
+async function endTeamAssignment(db, userId) {
+
+	await db.query(
+		`
+		UPDATE team_users
+		SET end_date = GREATEST(start_date, CURRENT_DATE)
+		WHERE user_id = $1
+			AND end_date IS NULL
+		`,
+		[userId]
+	);
+}
+
+
 // ---- Ownership checks (see docs/RBAC.md) ------------------------------------
 // Roles say what KIND of thing you can do; these say WHICH records you can do it to.
 // Each throws a 403 RuleError, or a 404 if the record doesn't exist. Admin always passes.
@@ -519,6 +619,9 @@ module.exports = {
 	assertCanRegister,
 	assertCanUnregister,
 	assertCanJoinTeam,
+	assertCanSetRoles,
+	assertCanAssignTeam,
+	endTeamAssignment,
 	assertCanManageEvent,
 	assertCanManageMatch,
 	assertCanManageTeam,

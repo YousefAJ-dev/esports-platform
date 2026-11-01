@@ -3,7 +3,10 @@ export type TeamSummary = {
 	team_name: string,
 	contact_email: string,
 	created_on?: string,
-	is_active: boolean
+	is_active: boolean,
+	// Current manager, included in the teams list
+	manager_user_id?: number | null,
+	manager_name?: string | null
 };
 
 export type TeamOverview = {

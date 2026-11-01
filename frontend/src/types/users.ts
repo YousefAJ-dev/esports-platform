@@ -10,10 +10,18 @@ export type UserSummary = {
 export type UserOverview = {
 	real_name: string,
 	username: string,
-	role_name: string | null,
+	roles: string[],
+	role_ids: number[],
 	email: string,
+	// The team this user manages, if they're a Team Manager with a team
+	managed_team_id: number | null,
 	manager_of: string | null,
 	is_active: boolean
+};
+
+export type Role = {
+	role_id: number,
+	role_name: string
 };
 
 export type UpdateUserPayload = Partial<Omit<UserSummary, "user_id">>;

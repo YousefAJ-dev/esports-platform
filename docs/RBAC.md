@@ -32,6 +32,16 @@ How the platform decides **who you are** and **what you're allowed to do**, and 
 
 Roster rules that apply to everyone: at most 1 Captain, 4 Players and 1 Substitute per team. A team needs a Captain and 4 Players to register for an event or play a match.
 
+## Managing access (Admins)
+
+Admins assign roles and team managers from a user's page (the **Access** section), which calls `PUT /api/users/:id/roles` and `PUT /api/users/:id/team`. Some safeguards keep the platform from locking itself out:
+
+- An Admin can't remove their own Admin role, deactivate their own account, or delete it.
+- The last active Admin can't lose the Admin role.
+- Only users with the Team Manager role can be assigned a team. A team has one manager at a time, and a manager runs one team.
+- Removing someone's Team Manager role also ends their team assignment. Old assignments are kept as history (an `end_date` is set), like rosters.
+- Role changes take effect on the user's next request. `loadUser` reads roles fresh every time, so nobody has to log out and back in.
+
 ## Where it lives in the code
 
 | Piece | File | What it does |
