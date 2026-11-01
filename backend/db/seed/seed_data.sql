@@ -316,6 +316,34 @@ VALUES
 
 
 -- ====================================
+-- MATCH_DETAILS
+-- ====================================
+
+-- Results for the completed matches (sessions 1-8), best of 3: winner scores 2, loser 0 or 1
+INSERT INTO match_details (session_id, team_id, score, is_winner)
+VALUES
+-- Event 1
+(1, 1, 2, TRUE),
+(1, 2, 1, FALSE),
+(2, 3, 0, FALSE),
+(2, 4, 2, TRUE),
+(3, 5, 2, TRUE),
+(3, 6, 1, FALSE),
+(4, 7, 1, FALSE),
+(4, 8, 2, TRUE),
+
+-- Event 2
+(5, 9, 2, TRUE),
+(5, 10, 0, FALSE),
+(6, 1, 1, FALSE),
+(6, 3, 2, TRUE),
+(7, 5, 0, FALSE),
+(7, 7, 2, TRUE),
+(8, 9, 1, FALSE),
+(8, 2, 2, TRUE);
+
+
+-- ====================================
 -- USERS
 -- ====================================
 
