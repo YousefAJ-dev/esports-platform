@@ -1,27 +1,41 @@
-function TopBar() {
-	
+import { useLocation } from "react-router";
+import NavIcon from "./NavIcon";
+import { NAV_GROUPS } from "./navConfig";
+
+type TopBarProps = {
+	onOpenMenu: () => void
+};
+
+// Labels keyed by the first URL segment, built once from the nav config
+const SECTION_LABELS = new Map(
+	NAV_GROUPS.flatMap(group => group.items).map(item => [item.path.slice(1), item.label])
+);
+
+function TopBar({ onOpenMenu }: TopBarProps) {
+
+	const { pathname } = useLocation();
+	const section = SECTION_LABELS.get(pathname.split("/")[1]) ?? "Arena Admin";
+
 	return (
-		<header className="flex items-center gap-4 border-b border-slate-800 bg-slate-900 px-6 py-4 text-slate-100">
-			<div className="flex-1">
-				<p className="text-2xl font-semibold text-white">
-					Admin Access
-				</p>
-				<p className="text-sm text-slate-400">
-					Manage platform activity
-				</p>
-			</div>
-
-			<input
-				className="hidden h-10 w-full max-w-md rounded-full border border-slate-700 bg-slate-950 px-4 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-900/60 md:block"
-				type="search"
-				placeholder="Search..."
-			/>
-
+		<header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-slate-800 bg-slate-950/80 px-4 backdrop-blur md:px-6">
 			<button
 				type="button"
-				className="rounded-full border border-purple-700/60 bg-purple-900/40 px-4 py-2 text-sm font-medium text-purple-100 transition hover:bg-purple-800/60 hover:text-white"
+				onClick={onOpenMenu}
+				aria-label="Open menu"
+				className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white md:hidden"
 			>
-				User
+				<NavIcon name="menu" />
+			</button>
+
+			<p className="flex-1 text-lg font-semibold text-white">{section}</p>
+
+			{/* Placeholder until login exists - this becomes the account menu */}
+			<button
+				type="button"
+				className="flex items-center gap-2 rounded-full border border-slate-700 py-1 pl-1 pr-3 text-sm text-slate-300 transition hover:border-purple-600 hover:text-white"
+			>
+				<span className="flex h-7 w-7 items-center justify-center rounded-full bg-purple-700 text-xs font-semibold text-white">AD</span>
+				Admin
 			</button>
 		</header>
 	);
