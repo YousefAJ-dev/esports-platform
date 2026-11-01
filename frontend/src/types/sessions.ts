@@ -7,7 +7,9 @@ export type SessionSummary = {
 	actual_end?: string | null,
 	timezone: string,
 	session_type: string,
-	status: string
+	status: string,
+	// Owner of the match's event; decides who may edit it
+	event_created_by?: number | null
 };
 
 export type UpdateSessionPayload = Partial<SessionSummary>;
@@ -52,6 +54,7 @@ export type EventMatch = {
 	session_id: number,
 	event_id: number,
 	event_name: string,
+	event_created_by?: number | null,
 	session_type: string,
 	scheduled_start: string,
 	scheduled_end: string,

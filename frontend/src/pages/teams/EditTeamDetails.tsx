@@ -8,6 +8,8 @@ import { useAsyncData } from "../../hooks/useAsyncData";
 import type { TeamSummary } from "../../types/teams";
 import CancelButton from "../../components/ui/CancelButton";
 import FormError from "../../components/ui/FormError";
+import { useAuth } from "../../context/authContext";
+import { isAdmin } from "../../helper/permissions";
 
 type TeamEditFormProps = {
 	id: string | undefined,
@@ -16,6 +18,8 @@ type TeamEditFormProps = {
 
 // Form is its own component so its state can be seeded directly from the fetched team
 function TeamEditForm({ id, original }: TeamEditFormProps) {
+
+	const { user } = useAuth();
 
 	const navigate = useNavigate();
 	const [formData, setFormData] = useState<TeamSummary>(original);
@@ -46,7 +50,8 @@ function TeamEditForm({ id, original }: TeamEditFormProps) {
 			<div className="form-grid">
 				<FormField label="Team Name:" name="team_name" type="text" value={formData.team_name} onChange={handleInputChange} required />
 				<FormField label="Contact Email:" name="contact_email" type="email" value={formData.contact_email} onChange={handleInputChange} required />
-				<FormField label="Active:" name="is_active" type="checkbox" checked={formData.is_active} onChange={handleInputChange} className="h-5 w-5" />
+				{/* Activating/deactivating is Admin-only (the server rejects it for anyone else) */}
+				{isAdmin(user) && <FormField label="Active:" name="is_active" type="checkbox" checked={formData.is_active} onChange={handleInputChange} className="h-5 w-5" />}
 			</div>
 
 			<FormError message={submitError} />

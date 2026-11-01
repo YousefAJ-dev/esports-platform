@@ -6,10 +6,14 @@ import StatusMessage from "../../components/ui/StatusMessage";
 import { useAsyncData } from "../../hooks/useAsyncData";
 import { byDate, byText, useFilteredList } from "../../hooks/useFilteredList";
 import type { EventSummary } from "../../types/events";
+import { useAuth } from "../../context/authContext";
+import { canCreateEvent } from "../../helper/permissions";
 
 const STATUSES = ["Upcoming", "In-Progress", "Completed", "Cancelled"];
 
 function EventsList({ events }: { events: EventSummary[] }) {
+
+	const { user } = useAuth();
 
 	const list = useFilteredList(events, {
 		searchText: event => `${event.event_name} ${event.location} ${event.description ?? ""}`,
@@ -28,7 +32,7 @@ function EventsList({ events }: { events: EventSummary[] }) {
 				title="Events"
 				description="Tournaments and the matches played in them."
 				count={events.length}
-				action={{ label: "Add Event", to: "/events/new" }}
+				action={canCreateEvent(user) ? { label: "Add Event", to: "/events/new" } : undefined}
 			/>
 
 			<ListToolbar list={list} placeholder="Search events or locations..." />

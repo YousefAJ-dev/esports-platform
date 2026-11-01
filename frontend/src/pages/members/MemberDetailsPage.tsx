@@ -7,11 +7,14 @@ import FormError from "../../components/ui/FormError";
 import StatusMessage from "../../components/ui/StatusMessage";
 import { useAsyncData } from "../../hooks/useAsyncData";
 import { useBreadcrumbTrail } from "../../hooks/useBreadcrumbTrail";
+import { useAuth } from "../../context/authContext";
+import { canDeactivate, canEditMember } from "../../helper/permissions";
 
 export function MemberDetailsPage() {
 
 	const { id } = useParams();
 	const navigate = useNavigate();
+	const { user } = useAuth();
 	const [actionError, setActionError] = useState<string | null>(null);
 	// Bumped after activating/deactivating so the overview reloads
 	const [version, setVersion] = useState(0);
@@ -64,11 +67,14 @@ export function MemberDetailsPage() {
 					<h1 className="header-text">{member.display_name}</h1>
 				</div>
 
-				<div className="flex justify-end gap-4">
-					<Link to={`/members/${id}/edit`} className="green-btn green-btn-clickable">Edit</Link>
-					<button type="button" onClick={handleToggleActive} className="ghost-btn">{member.is_active ? "Deactivate" : "Reactivate"}</button>
-					<button type="button" onClick={handleDelete} className="red-btn">Delete</button>
-				</div>
+				{/* Their team's manager can edit details; only Admins deactivate or delete */}
+				{(canEditMember(user, member.team_id) || canDeactivate(user)) && (
+					<div className="flex justify-end gap-4">
+						{canEditMember(user, member.team_id) && <Link to={`/members/${id}/edit`} className="green-btn green-btn-clickable">Edit</Link>}
+						{canDeactivate(user) && <button type="button" onClick={handleToggleActive} className="ghost-btn">{member.is_active ? "Deactivate" : "Reactivate"}</button>}
+						{canDeactivate(user) && <button type="button" onClick={handleDelete} className="red-btn">Delete</button>}
+					</div>
+				)}
 
 				<FormError message={actionError} />
 

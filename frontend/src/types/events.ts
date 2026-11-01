@@ -6,7 +6,9 @@ export type EventSummary = {
 	start_on: string, 
 	end_on: string, 
 	timezone: string,
-	status: string
+	status: string,
+	// The Organizer who planned it; they (and Admins) can manage it
+	created_by?: number | null
 }
 
 export type EventOverview = {

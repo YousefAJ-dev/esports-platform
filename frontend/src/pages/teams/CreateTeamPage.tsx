@@ -6,10 +6,13 @@ import { inputChangeHandler } from "../../helper/helperFunctions";
 import type { CreateTeamPayload } from "../../types/teams";
 import CancelButton from "../../components/ui/CancelButton";
 import FormError from "../../components/ui/FormError";
+import { useAuth } from "../../context/authContext";
+import { isAdmin } from "../../helper/permissions";
 
 export function CreateTeamPage() {
 
 	const navigate = useNavigate();
+	const { user, refresh } = useAuth();
 
 	const [formData, setFormData] = useState<CreateTeamPayload>({
 		team_name: "",
@@ -27,6 +30,8 @@ export function CreateTeamPage() {
 
 		try {
 			const team = await createTeam(formData);
+			// A Team Manager is now this team's manager, so reload who they are
+			await refresh();
 			navigate(`/teams/${team.team_id}`);
 		} catch (error) {
 			setErrorMsg(error instanceof Error ? error.message : "Error creating team");
@@ -44,7 +49,8 @@ export function CreateTeamPage() {
 					<div className="form-grid">
 						<FormField label="Team Name:" name="team_name" type="text" value={formData.team_name} onChange={handleInputChange} required />
 						<FormField label="Contact Email:" name="contact_email" type="email" value={formData.contact_email} onChange={handleInputChange} required />
-						<FormField label="Active:" name="is_active" type="checkbox" checked={formData.is_active} onChange={handleInputChange} className="h-5 w-5" />
+						{/* Activating/deactivating is Admin-only (the server rejects it for anyone else) */}
+						{isAdmin(user) && <FormField label="Active:" name="is_active" type="checkbox" checked={formData.is_active} onChange={handleInputChange} className="h-5 w-5" />}
 					</div>
 
 					<FormError message={errorMsg} />

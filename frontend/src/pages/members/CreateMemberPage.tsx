@@ -6,8 +6,12 @@ import { inputChangeHandler } from "../../helper/helperFunctions";
 import type { CreateMemberPayload } from "../../types/members";
 import CancelButton from "../../components/ui/CancelButton";
 import FormError from "../../components/ui/FormError";
+import { useAuth } from "../../context/authContext";
+import { isAdmin } from "../../helper/permissions";
 
 export function CreateMemberPage() {
+
+	const { user } = useAuth();
 
 	const navigate = useNavigate();
 
@@ -46,7 +50,8 @@ export function CreateMemberPage() {
 						<FormField label="Real Name:" name="real_name" type="text" value={formData.real_name} onChange={handleInputChange} required />
 						<FormField label="Display Name:" name="display_name" type="text" value={formData.display_name} onChange={handleInputChange} required />
 						<FormField label="Date of Birth:" name="date_of_birth" type="date" value={formData.date_of_birth} onChange={handleInputChange} required />
-						<FormField label="Active:" name="is_active" type="checkbox" checked={formData.is_active} onChange={handleInputChange} className="h-5 w-5" />
+						{/* Activating/deactivating is Admin-only (the server rejects it for anyone else) */}
+						{isAdmin(user) && <FormField label="Active:" name="is_active" type="checkbox" checked={formData.is_active} onChange={handleInputChange} className="h-5 w-5" />}
 					</div>
 
 					<FormError message={errorMsg} />

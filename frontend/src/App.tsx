@@ -34,41 +34,53 @@ import UserDetailsPage from './pages/users/UserDetailsPage';
 import EditUserDetails from './pages/users/EditUserDetails';
 import CreateUserPage from './pages/users/CreateUserPage';
 
+import LoginPage from './pages/LoginPage';
+import RequirePermission from './components/layout/RequirePermission';
+import { canCreateEvent, canCreateMember, canCreateTeam, canManageTeam, isAdmin } from './helper/permissions';
+
+// Route access at a glance (the server enforces the same rules on every request):
+//   public        - dashboard, events, matches, standings (the tournament view)
+//   logged in     - teams and members
+//   by permission - create/edit pages and the Admin-only users section
 function App() {
 
 	return (
 		<Routes>
+			<Route path="login" element={<LoginPage />} />
+
 			<Route path="/" element={<AppLayout />}>
 				<Route index element={<Navigate to="/dashboard" replace />} />
 
+				{/* Public tournament view */}
 				<Route path="dashboard" element={<DashboardPage />} />
-
 				<Route path="events" element={<EventsPage />} />
 				<Route path="events/:id" element={< EventDetailsPage />} />
-				<Route path="events/:id/edit" element={<EditEventDetails />}/>
-				<Route path='events/new' element={<EventCreatePage /> }/>
-
 				<Route path="sessions" element={<SessionsPage />} />
 				<Route path="sessions/:id" element={<SessionDetailsPage/>}/>
-				<Route path="sessions/:id/edit" element={<EditSessionDetails/>}/>
-				<Route path='sessions/new' element={<SessionCreate/>}/>
-				
 				<Route path="standings" element={<StandingsPage />} />
 
-				<Route path="teams" element={<TeamsPage />} />
-				<Route path="teams/:id" element={<TeamDetailsPage />} />
-				<Route path="teams/:id/edit" element={<EditTeamDetails />} />
-				<Route path="teams/new" element={<CreateTeamPage />} />
+				{/* Organizers and Admins; ownership of the specific event is checked by the server */}
+				<Route path='events/new' element={<RequirePermission allow={canCreateEvent}><EventCreatePage /></RequirePermission>}/>
+				<Route path="events/:id/edit" element={<RequirePermission allow={canCreateEvent}><EditEventDetails /></RequirePermission>}/>
+				<Route path='sessions/new' element={<RequirePermission allow={canCreateEvent}><SessionCreate/></RequirePermission>}/>
+				<Route path="sessions/:id/edit" element={<RequirePermission allow={canCreateEvent}><EditSessionDetails/></RequirePermission>}/>
 
-				<Route path="members" element={<MembersPage />} />
-				<Route path="members/:id" element={<MemberDetailsPage />} />
-				<Route path="members/:id/edit" element={<EditMemberDetails />} />
-				<Route path="members/new" element={<CreateMemberPage />} />
+				{/* Teams and members need a login */}
+				<Route path="teams" element={<RequirePermission><TeamsPage /></RequirePermission>} />
+				<Route path="teams/new" element={<RequirePermission allow={canCreateTeam}><CreateTeamPage /></RequirePermission>} />
+				<Route path="teams/:id" element={<RequirePermission><TeamDetailsPage /></RequirePermission>} />
+				<Route path="teams/:id/edit" element={<RequirePermission allow={(user, params) => canManageTeam(user, Number(params.id))}><EditTeamDetails /></RequirePermission>} />
 
-				<Route path="users" element={<UsersPage />} />
-				<Route path="users/:id" element={<UserDetailsPage />} />
-				<Route path="users/:id/edit" element={<EditUserDetails />} />
-				<Route path="users/new" element={<CreateUserPage />} />
+				<Route path="members" element={<RequirePermission><MembersPage /></RequirePermission>} />
+				<Route path="members/new" element={<RequirePermission allow={canCreateMember}><CreateMemberPage /></RequirePermission>} />
+				<Route path="members/:id" element={<RequirePermission><MemberDetailsPage /></RequirePermission>} />
+				<Route path="members/:id/edit" element={<RequirePermission allow={canCreateMember}><EditMemberDetails /></RequirePermission>} />
+
+				{/* Staff accounts are Admin-only */}
+				<Route path="users" element={<RequirePermission allow={isAdmin}><UsersPage /></RequirePermission>} />
+				<Route path="users/new" element={<RequirePermission allow={isAdmin}><CreateUserPage /></RequirePermission>} />
+				<Route path="users/:id" element={<RequirePermission allow={isAdmin}><UserDetailsPage /></RequirePermission>} />
+				<Route path="users/:id/edit" element={<RequirePermission allow={isAdmin}><EditUserDetails /></RequirePermission>} />
 
 			</Route>
 		</Routes>

@@ -6,8 +6,12 @@ import TeamCard from "../../components/ui/TeamCard";
 import { useAsyncData } from "../../hooks/useAsyncData";
 import { byText, useFilteredList } from "../../hooks/useFilteredList";
 import type { TeamSummary } from "../../types/teams";
+import { useAuth } from "../../context/authContext";
+import { canCreateTeam } from "../../helper/permissions";
 
 function TeamsList({ teams }: { teams: TeamSummary[] }) {
+
+	const { user } = useAuth();
 
 	const list = useFilteredList(teams, {
 		searchText: team => `${team.team_name} ${team.contact_email}`,
@@ -25,7 +29,7 @@ function TeamsList({ teams }: { teams: TeamSummary[] }) {
 				title="Teams"
 				description="Teams that compete on the platform."
 				count={teams.length}
-				action={{ label: "Add Team", to: "/teams/new" }}
+				action={canCreateTeam(user) ? { label: "Add Team", to: "/teams/new" } : undefined}
 			/>
 
 			<ListToolbar list={list} placeholder="Search teams or emails..." />

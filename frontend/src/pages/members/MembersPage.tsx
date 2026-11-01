@@ -8,6 +8,8 @@ import StatusPill from "../../components/ui/StatusPill";
 import { useAsyncData } from "../../hooks/useAsyncData";
 import { byText, useFilteredList } from "../../hooks/useFilteredList";
 import type { MemberSummary } from "../../types/members";
+import { useAuth } from "../../context/authContext";
+import { canCreateMember } from "../../helper/permissions";
 
 const COLUMNS: Column<MemberSummary>[] = [
 	{ header: "Display Name", render: member => member.display_name },
@@ -22,6 +24,8 @@ const COLUMNS: Column<MemberSummary>[] = [
 ];
 
 function MembersList({ members }: { members: MemberSummary[] }) {
+
+	const { user } = useAuth();
 
 	const list = useFilteredList(members, {
 		searchText: member => `${member.display_name} ${member.real_name} ${member.team_name ?? ""}`,
@@ -40,7 +44,7 @@ function MembersList({ members }: { members: MemberSummary[] }) {
 				title="Members"
 				description="Players registered on the platform and the team they're on."
 				count={members.length}
-				action={{ label: "Add Member", to: "/members/new" }}
+				action={canCreateMember(user) ? { label: "Add Member", to: "/members/new" } : undefined}
 			/>
 
 			<ListToolbar list={list} placeholder="Search by name or team..." />

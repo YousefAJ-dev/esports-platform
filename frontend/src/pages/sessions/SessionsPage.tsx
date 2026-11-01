@@ -7,11 +7,15 @@ import { useAsyncData } from "../../hooks/useAsyncData";
 import { byDate, useFilteredList } from "../../hooks/useFilteredList";
 import type { Crumb } from "../../types/navigation";
 import type { EventMatch } from "../../types/sessions";
+import { useAuth } from "../../context/authContext";
+import { canCreateEvent } from "../../helper/permissions";
 
 const STATUSES = ["Upcoming", "In-Progress", "Completed", "Cancelled"];
 const TRAIL: Crumb[] = [{ label: "Matches", to: "/sessions" }];
 
 function MatchesList({ matches }: { matches: EventMatch[] }) {
+
+	const { user } = useAuth();
 
 	const list = useFilteredList(matches, {
 		// Team names are searchable so "Titans" finds every match a team played
@@ -30,7 +34,7 @@ function MatchesList({ matches }: { matches: EventMatch[] }) {
 				title="Matches"
 				description="Every match across all events, with teams and scores."
 				count={matches.length}
-				action={{ label: "Add Match", to: "/sessions/new" }}
+				action={canCreateEvent(user) ? { label: "Add Match", to: "/sessions/new" } : undefined}
 			/>
 
 			<ListToolbar list={list} placeholder="Search by event, round or team..." />

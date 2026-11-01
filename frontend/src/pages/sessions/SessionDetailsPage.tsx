@@ -5,10 +5,28 @@ import StatusMessage from "../../components/ui/StatusMessage";
 import { convertDate } from "../../helper/helperFunctions";
 import { useAsyncData } from "../../hooks/useAsyncData";
 import { useBreadcrumbTrail } from "../../hooks/useBreadcrumbTrail";
+import { useAuth } from "../../context/authContext";
+import { canManageEvent } from "../../helper/permissions";
+
+type TeamCardShellProps = {
+	to: string | null,
+	state: unknown,
+	className: string,
+	children: React.ReactNode
+};
+
+// A link when there's somewhere to go, otherwise a plain card with the same look
+function TeamCardShell({ to, state, className, children }: TeamCardShellProps) {
+
+	if (!to) return <div className={className.replace("stat-card-clickable", "")}>{children}</div>;
+
+	return <Link to={to} state={state} className={className}>{children}</Link>;
+}
 
 export function SessionDetailsPage() {
 
 	const { id } = useParams();
+	const { user } = useAuth();
 
 	// The three requests are independent, so run them in parallel
 	const { data, errorMsg, isLoading } = useAsyncData(
@@ -52,19 +70,21 @@ export function SessionDetailsPage() {
 				{/* Header */}
 				<div className="header-box">
 					<p className="text-sm font-medium text-purple-300">
-						Session #{session.session_id}
+						Match #{session.session_id}
 					</p>
 					<h1 className="header-text">{session.session_type}</h1>
 				</div>
 
-				<div className="flex justify-end">
-					<Link
-						to={`/sessions/${id}/edit`}
-						className="green-btn green-btn-clickable"
-					>
-						Edit
-					</Link>
-				</div>
+				{canManageEvent(user, session.event_created_by) && (
+					<div className="flex justify-end">
+						<Link
+							to={`/sessions/${id}/edit`}
+							className="green-btn green-btn-clickable"
+						>
+							Edit
+						</Link>
+					</div>
+				)}
 
 				{/* Session Stats*/}
 				<section>
@@ -135,11 +155,12 @@ export function SessionDetailsPage() {
 							No teams assigned to this match yet.
 						</div>
 					) : (
+						// Team pages need a login, so visitors get the same cards without links
 						<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 							{teams.map(team => (
-								<Link
+								<TeamCardShell
 									key={team.team_id}
-									to={`/teams/${team.team_id}`}
+									to={user ? `/teams/${team.team_id}` : null}
 									state={{ trail: childTrail }}
 									className={`${team.is_winner ? "stat-card-purple" : "stat-card"} stat-card-clickable block`}
 								>
@@ -166,7 +187,7 @@ export function SessionDetailsPage() {
 									</div>
 
 									<p className="stat-link-text">View team →</p>
-								</Link>
+								</TeamCardShell>
 							))}
 						</div>
 					)}

@@ -6,14 +6,17 @@ import FormError from "./FormError";
 
 type AddPlayerFormProps = {
 	teamId: string | undefined,
-	hasCaptain: boolean,
+	// Current active members per position, e.g. { Captain: 1, Player: 3 }
+	positionCounts: Record<string, number>,
 	refreshKey: number,
 	onAdded: () => void
 };
 
-const POSITIONS = ["Player", "Captain", "Substitute"];
+// Roster shape enforced by the server too: up to 6 members
+const POSITION_LIMITS: Record<string, number> = { Player: 4, Captain: 1, Substitute: 1 };
+const POSITIONS = Object.keys(POSITION_LIMITS);
 
-export function AddPlayerForm({ teamId, hasCaptain, refreshKey, onAdded }: AddPlayerFormProps) {
+export function AddPlayerForm({ teamId, positionCounts, refreshKey, onAdded }: AddPlayerFormProps) {
 
 	// Only active members who aren't on a team come back, so taken members can't be picked
 	const { data: members, errorMsg, isLoading } = useAsyncData(
@@ -21,23 +24,27 @@ export function AddPlayerForm({ teamId, hasCaptain, refreshKey, onAdded }: AddPl
 	);
 
 	const [memberId, setMemberId] = useState<string>("");
-	const [position, setPosition] = useState<string>("Player");
+	const isFull = (option: string) => (positionCounts[option] ?? 0) >= POSITION_LIMITS[option];
+	const firstOpen = POSITIONS.find(option => !isFull(option)) ?? "Player";
+
+	const [position, setPosition] = useState<string>(firstOpen);
 	const [startDate, setStartDate] = useState<string>(() => new Date().toLocaleDateString("en-CA")); // YYYY-MM-DD, local
 	const [submitError, setSubmitError] = useState<string | null>(null);
 
-	const captainTaken = hasCaptain && position === "Captain";
+	const positionFull = isFull(position);
+	const rosterFull = POSITIONS.every(isFull);
 
 	const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault(); // Do not refresh browser on submit
 
-		if (captainTaken) return;
+		if (positionFull) return;
 
 		setSubmitError(null);
 
 		try {
 			await addTeamMember(teamId, { member_id: Number(memberId), team_position: position, start_date: startDate });
 			setMemberId("");
-			setPosition("Player");
+			setPosition(firstOpen);
 			onAdded();
 		} catch (error) {
 			setSubmitError(error instanceof Error ? error.message : "Error adding player");
@@ -46,6 +53,10 @@ export function AddPlayerForm({ teamId, hasCaptain, refreshKey, onAdded }: AddPl
 
 	if (isLoading) return <p className="text-purple-300">Loading members...</p>;
 	if (errorMsg || !members) return <div className="stat-card">{errorMsg}</div>;
+
+	if (rosterFull) {
+		return <div className="stat-card text-slate-400">The roster is full (1 Captain, 4 Players, 1 Substitute).</div>;
+	}
 
 	if (members.length === 0) {
 		return <div className="stat-card text-slate-400">Every active member is already on a team.</div>;
@@ -82,8 +93,8 @@ export function AddPlayerForm({ teamId, hasCaptain, refreshKey, onAdded }: AddPl
 					className="purple-input-box"
 				>
 					{POSITIONS.map(option => (
-						<option key={option} value={option} disabled={option === "Captain" && hasCaptain}>
-							{option === "Captain" && hasCaptain ? "Captain (already assigned)" : option}
+						<option key={option} value={option} disabled={isFull(option)}>
+							{option} ({positionCounts[option] ?? 0}/{POSITION_LIMITS[option]}){isFull(option) ? " - full" : ""}
 						</option>
 					))}
 				</select>
@@ -100,10 +111,10 @@ export function AddPlayerForm({ teamId, hasCaptain, refreshKey, onAdded }: AddPl
 				/>
 			</div>
 
-			<FormError message={captainTaken ? "This team already has a captain." : submitError} />
+			<FormError message={positionFull ? `The ${position} spots are full.` : submitError} />
 
 			<div className="mt-8 mb-3">
-				<button type="submit" disabled={captainTaken} className="green-btn green-btn-clickable disabled:cursor-not-allowed disabled:opacity-50">
+				<button type="submit" disabled={positionFull} className="green-btn green-btn-clickable disabled:cursor-not-allowed disabled:opacity-50">
 					Add Player
 				</button>
 			</div>

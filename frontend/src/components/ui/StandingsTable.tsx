@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import type { Crumb } from "../../types/navigation";
 import type { Standing } from "../../types/standings";
+import { useAuth } from "../../context/authContext";
 
 type StandingsTableProps = {
 	standings: Standing[],
@@ -11,6 +12,9 @@ const formatDiff = (diff: number) => diff > 0 ? `+${diff}` : String(diff);
 
 // Rows arrive ranked from the API (wins, then score difference)
 export function StandingsTable({ standings, trail }: StandingsTableProps) {
+
+	// Team pages need a login, so visitors see names without links
+	const { user } = useAuth();
 
 	if (standings.length === 0) {
 		return <div className="stat-card text-slate-400">No teams to rank yet.</div>;
@@ -42,9 +46,13 @@ export function StandingsTable({ standings, trail }: StandingsTableProps) {
 								{/* Top three get a highlighted rank */}
 								<td className={`px-4 py-3 font-semibold ${index < 3 && row.played ? "text-purple-300" : "text-slate-500"}`}>{index + 1}</td>
 								<td className="px-4 py-3">
-									<Link to={`/teams/${row.team_id}`} state={trail ? { trail } : undefined} className="font-medium text-white hover:text-purple-300">
-										{row.team_name}
-									</Link>
+									{user ? (
+										<Link to={`/teams/${row.team_id}`} state={trail ? { trail } : undefined} className="font-medium text-white hover:text-purple-300">
+											{row.team_name}
+										</Link>
+									) : (
+										<span className="font-medium text-white">{row.team_name}</span>
+									)}
 									{!row.is_active && <span className="ml-2 text-xs text-slate-500">(inactive)</span>}
 								</td>
 								<td className="px-3 py-3 text-right text-slate-300">{row.played}</td>

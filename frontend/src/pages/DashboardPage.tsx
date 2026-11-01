@@ -14,15 +14,19 @@ import type { DashboardSummary } from "../types/dashboard";
 import type { EventSummary } from "../types/events";
 import type { Crumb } from "../types/navigation";
 import type { EventMatch } from "../types/sessions";
+import { useAuth } from "../context/authContext";
+import { canCreateEvent, canCreateMember, canCreateTeam } from "../helper/permissions";
+import type { AuthUser } from "../types/auth";
 
 const LIST_LIMIT = 5;
 const TRAIL: Crumb[] = [{ label: "Dashboard", to: "/dashboard" }];
 
-const QUICK_ACTIONS = [
-	{ label: "New Event", to: "/events/new" },
-	{ label: "New Match", to: "/sessions/new" },
-	{ label: "New Team", to: "/teams/new" },
-	{ label: "New Member", to: "/members/new" },
+// Each quick action only shows for people allowed to use it
+const QUICK_ACTIONS: { label: string, to: string, allow: (user: AuthUser | null) => boolean }[] = [
+	{ label: "New Event", to: "/events/new", allow: canCreateEvent },
+	{ label: "New Match", to: "/sessions/new", allow: canCreateEvent },
+	{ label: "New Team", to: "/teams/new", allow: canCreateTeam },
+	{ label: "New Member", to: "/members/new", allow: canCreateMember },
 ];
 
 type DashboardData = {
@@ -65,6 +69,8 @@ function MatchList({ matches, emptyText }: { matches: EventMatch[], emptyText: s
 
 function DashboardView({ summary, matches, events }: DashboardData) {
 
+	const { user } = useAuth();
+
 	// One pass splits matches by status; only the small buckets get sorted
 	const { live, upNext, recent } = useMemo(() => {
 		const live: EventMatch[] = [];
@@ -96,16 +102,21 @@ function DashboardView({ summary, matches, events }: DashboardData) {
 		{ label: "Events", value: summary.total_events, detail: `${summary.total_upcoming_events} upcoming` },
 		{ label: "Matches", value: summary.total_sessions, detail: `${summary.total_completed_sessions} completed` },
 		{ label: "Upcoming Matches", value: summary.total_upcoming_sessions, detail: `${live.length} live now` },
-		{ label: "Teams", value: summary.total_teams, detail: `${summary.total_active_managers} active managers` },
-		{ label: "Members", value: summary.total_members, detail: `${summary.total_active_members} active` },
+		// People stats are for staff; visitors get the tournament numbers only
+		...(user ? [
+			{ label: "Teams", value: summary.total_teams, detail: `${summary.total_active_managers} active managers` },
+			{ label: "Members", value: summary.total_members, detail: `${summary.total_active_members} active` },
+		] : []),
 	];
+
+	const quickActions = QUICK_ACTIONS.filter(action => action.allow(user));
 
 	return (
 		<section className="mx-auto max-w-7xl space-y-6">
 			<PageHeader title="Dashboard" description="What's happening across your tournaments right now." />
 
 			{/* Compact stats */}
-			<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+			<div className={`grid grid-cols-2 gap-3 sm:grid-cols-3 ${user ? "lg:grid-cols-5" : "lg:grid-cols-3"}`}>
 				{stats.map(stat => (
 					<div key={stat.label} className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3">
 						<p className="text-xs font-medium uppercase tracking-wider text-slate-500">{stat.label}</p>
@@ -115,12 +126,14 @@ function DashboardView({ summary, matches, events }: DashboardData) {
 				))}
 			</div>
 
-			{/* Quick actions */}
-			<div className="flex flex-wrap gap-3">
-				{QUICK_ACTIONS.map(action => (
-					<Link key={action.to} to={action.to} className="ghost-btn text-sm">+ {action.label}</Link>
-				))}
-			</div>
+			{/* Quick actions - hidden entirely for visitors and read-only roles */}
+			{quickActions.length > 0 && (
+				<div className="flex flex-wrap gap-3">
+					{quickActions.map(action => (
+						<Link key={action.to} to={action.to} className="ghost-btn text-sm">+ {action.label}</Link>
+					))}
+				</div>
+			)}
 
 			{/* Live now - only shown while something is being played */}
 			{live.length > 0 && (

@@ -9,11 +9,14 @@ import StatusMessage from "../../components/ui/StatusMessage";
 import { convertDate } from "../../helper/helperFunctions";
 import { useAsyncData } from "../../hooks/useAsyncData";
 import { useBreadcrumbTrail } from "../../hooks/useBreadcrumbTrail";
+import { useAuth } from "../../context/authContext";
+import { canDeactivate, canManageTeam } from "../../helper/permissions";
 
 export function TeamDetailsPage() {
 
 	const { id } = useParams();
 	const navigate = useNavigate();
+	const { user } = useAuth();
 	const [actionError, setActionError] = useState<string | null>(null);
 	// Bumped after a roster change so the overview, roster and member list reload
 	const [rosterVersion, setRosterVersion] = useState<number>(0);
@@ -72,7 +75,15 @@ export function TeamDetailsPage() {
 		}
 	};
 
-	const hasCaptain = roster.some(player => player.team_position === "Captain");
+	// Open spots per position, so the add form can grey out full positions
+	const positionCounts = roster.reduce<Record<string, number>>((counts, player) => {
+		counts[player.team_position] = (counts[player.team_position] ?? 0) + 1;
+		return counts;
+	}, {});
+
+	// The team's own manager (or an Admin) runs the roster; only Admins deactivate or delete
+	const canManage = canManageTeam(user, Number(id));
+	const isAdminUser = canDeactivate(user);
 
 	const captain = overview.team_captain_dname
 		? `${overview.team_captain_dname} (${overview.team_captain_rname})`
@@ -90,11 +101,13 @@ export function TeamDetailsPage() {
 					<h1 className="header-text">{overview.team_name}</h1>
 				</div>
 
-				<div className="flex justify-end gap-4">
-					<Link to={`/teams/${id}/edit`} className="green-btn green-btn-clickable">Edit</Link>
-					<button type="button" onClick={handleToggleActive} className="ghost-btn">{overview.is_active ? "Deactivate" : "Reactivate"}</button>
-					<button type="button" onClick={handleDelete} className="red-btn">Delete</button>
-				</div>
+				{(canManage || isAdminUser) && (
+					<div className="flex justify-end gap-4">
+						{canManage && <Link to={`/teams/${id}/edit`} className="green-btn green-btn-clickable">Edit</Link>}
+						{isAdminUser && <button type="button" onClick={handleToggleActive} className="ghost-btn">{overview.is_active ? "Deactivate" : "Reactivate"}</button>}
+						{isAdminUser && <button type="button" onClick={handleDelete} className="red-btn">Delete</button>}
+					</div>
+				)}
 
 				<FormError message={actionError} />
 
@@ -133,28 +146,32 @@ export function TeamDetailsPage() {
 										<p className="value-text">{player.display_name}</p>
 										<p className="mt-1 text-slate-400">{player.real_name} · since {convertDate(player.start_date)}</p>
 									</Link>
-									<button
-										type="button"
-										onClick={() => handleRemovePlayer(player.member_id, player.display_name)}
-										className="mt-3 self-start text-sm text-slate-400 hover:text-purple-300"
-									>
-										Remove from team
-									</button>
+									{canManage && (
+										<button
+											type="button"
+											onClick={() => handleRemovePlayer(player.member_id, player.display_name)}
+											className="mt-3 self-start text-sm text-slate-400 hover:text-purple-300"
+										>
+											Remove from team
+										</button>
+									)}
 								</div>
 							))}
 						</div>
 					)}
 				</section>
 
-				{/* Add Player - inactive teams can't take new players */}
-				<section>
-					<h2 className="mb-4 text-2xl font-semibold text-white">Add Player</h2>
-					{overview.is_active ? (
-						<AddPlayerForm teamId={id} hasCaptain={hasCaptain} refreshKey={rosterVersion} onAdded={refreshRoster} />
-					) : (
-						<div className="stat-card text-slate-400">This team is inactive, so players can't be added.</div>
-					)}
-				</section>
+				{/* Add Player - only for whoever runs this roster; inactive teams can't take new players */}
+				{canManage && (
+					<section>
+						<h2 className="mb-4 text-2xl font-semibold text-white">Add Player</h2>
+						{overview.is_active ? (
+							<AddPlayerForm teamId={id} positionCounts={positionCounts} refreshKey={rosterVersion} onAdded={refreshRoster} />
+						) : (
+							<div className="stat-card text-slate-400">This team is inactive, so players can't be added.</div>
+						)}
+					</section>
+				)}
 			</div>
 		</div>
 	);

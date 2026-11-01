@@ -9,11 +9,13 @@ import FormError from "./FormError";
 type EventTeamsSectionProps = {
 	eventId: string | undefined,
 	eventStatus: string,
-	trail: Crumb[]
+	trail: Crumb[],
+	// Register/withdraw controls are only for the event's Organizer or an Admin
+	canManage: boolean
 };
 
 // Registered teams for an event, with register/withdraw. The server enforces the same rules.
-export function EventTeamsSection({ eventId, eventStatus, trail }: EventTeamsSectionProps) {
+export function EventTeamsSection({ eventId, eventStatus, trail, canManage }: EventTeamsSectionProps) {
 
 	// Bumped after a change so the registered list and the dropdown reload together
 	const [version, setVersion] = useState(0);
@@ -33,6 +35,7 @@ export function EventTeamsSection({ eventId, eventStatus, trail }: EventTeamsSec
 	if (errorMsg || !data) return <div className="stat-card">{errorMsg}</div>;
 
 	const isClosed = eventStatus === "Completed" || eventStatus === "Cancelled";
+	const showControls = canManage && !isClosed;
 	const registeredIds = new Set(data.registered.map(team => team.team_id));
 	const available = data.teams.filter(team => team.is_active && !registeredIds.has(team.team_id));
 
@@ -68,7 +71,7 @@ export function EventTeamsSection({ eventId, eventStatus, trail }: EventTeamsSec
 							</Link>
 
 							{/* A team already scheduled into a match has to be removed from it first */}
-							{!isClosed && (
+							{showControls && (
 								<button
 									type="button"
 									onClick={() => run(() => unregisterEventTeam(eventId, team.team_id))}
@@ -84,7 +87,7 @@ export function EventTeamsSection({ eventId, eventStatus, trail }: EventTeamsSec
 				</div>
 			)}
 
-			{isClosed ? (
+			{!canManage ? null : isClosed ? (
 				<p className="text-sm text-slate-500">Registration is closed for {eventStatus.toLowerCase()} events.</p>
 			) : (
 				<form onSubmit={handleRegister} className="flex flex-col gap-3 sm:flex-row sm:items-center">

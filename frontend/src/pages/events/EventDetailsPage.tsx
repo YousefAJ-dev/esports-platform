@@ -11,10 +11,13 @@ import StatusMessage from "../../components/ui/StatusMessage";
 import { convertDate } from "../../helper/helperFunctions";
 import { useAsyncData } from "../../hooks/useAsyncData";
 import { useBreadcrumbTrail } from "../../hooks/useBreadcrumbTrail";
+import { useAuth } from "../../context/authContext";
+import { canManageEvent } from "../../helper/permissions";
 
 export function EventDetailPage() {
 
 	const { id } = useParams();
+	const { user } = useAuth();
 
 	// Event, overview and matches don't depend on each other, so load them in parallel
 	const { data, errorMsg, isLoading } = useAsyncData(
@@ -50,6 +53,9 @@ export function EventDetailPage() {
 
 	const { event, overview, matches, standings } = data;
 
+	// Only the Organizer who planned this event (or an Admin) can change it
+	const canManage = canManageEvent(user, event.created_by);
+
 	return (
 	<div>
 		<div className="mx-auto max-w-6xl space-y-8">
@@ -70,6 +76,12 @@ export function EventDetailPage() {
 					{event.description ?? "An Esports Tournament"}
 				</p>
 			</div>
+
+			{canManage && (
+				<div className="flex justify-end">
+					<Link to={`/events/${event.event_id}/edit`} className="green-btn green-btn-clickable">Edit Event</Link>
+				</div>
+			)}
 
 			{/* Event Details */}
 			<section>
@@ -160,11 +172,13 @@ export function EventDetailPage() {
 				</div>
 			</section>
 
-			{/* Registered Teams - matches can only use these */}
-			<section>
-				<h2 className="mb-4 text-2xl font-semibold text-white">Registered Teams</h2>
-				<EventTeamsSection eventId={id} eventStatus={event.status} trail={childTrail} />
-			</section>
+			{/* Registered Teams - matches can only use these. Team details need a login, so visitors skip this */}
+			{user && (
+				<section>
+					<h2 className="mb-4 text-2xl font-semibold text-white">Registered Teams</h2>
+					<EventTeamsSection eventId={id} eventStatus={event.status} trail={childTrail} canManage={canManage} />
+				</section>
+			)}
 
 			{/* Bracket */}
 			<section>
@@ -173,12 +187,14 @@ export function EventDetailPage() {
 						Bracket
 					</h2>
 					{/* Prefills the event on the create form */}
-					<Link
-						to={`/sessions/new?event_id=${event.event_id}`}
-						className="green-btn green-btn-clickable"
-					>
-						Add Match
-					</Link>
+					{canManage && (
+						<Link
+							to={`/sessions/new?event_id=${event.event_id}`}
+							className="green-btn green-btn-clickable"
+						>
+							Add Match
+						</Link>
+					)}
 				</div>
 
 				<EventBracket matches={matches} trail={childTrail} />

@@ -1,6 +1,7 @@
 import { NavLink } from "react-router";
+import { useAuth } from "../../context/authContext";
 import NavIcon from "./NavIcon";
-import { NAV_GROUPS } from "./navConfig";
+import { visibleNavGroups } from "./navConfig";
 
 type SidebarProps = {
 	collapsed: boolean,
@@ -16,9 +17,12 @@ type NavContentProps = {
 
 function NavContent({ collapsed, onNavigate }: NavContentProps) {
 
+	// Visitors only see the tournament pages; Users is Admin-only
+	const { user } = useAuth();
+
 	return (
 		<nav className="flex-1 overflow-y-auto px-3 py-4">
-			{NAV_GROUPS.map(group => (
+			{visibleNavGroups(user).map(group => (
 				<div key={group.title} className="mb-6">
 					{/* Group titles become a thin divider when the rail is collapsed */}
 					{collapsed
