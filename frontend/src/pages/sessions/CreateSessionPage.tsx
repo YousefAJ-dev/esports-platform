@@ -1,12 +1,16 @@
 import { useState } from "react";
 import type { CreateSessionPayload } from "../../types/sessions";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { inputChangeHandler } from "../../helper/helperFunctions";
 import { createSession } from "../../api/sessionsApi";
 
 export function CreateSessionPage() {
 
 	const navigate = useNavigate();
+
+	// "Add Match" on an event's page passes ?event_id= so the event is prefilled
+	const [searchParams] = useSearchParams();
+	const eventIdParam = searchParams.get("event_id");
 	const timeZones = Intl.supportedValuesOf("timeZone");
 	const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -24,7 +28,7 @@ export function CreateSessionPage() {
 
 	const [formData, setFormData] = useState<CreateSessionPayload>(
 		{
-			event_id: null,
+			event_id: eventIdParam ? Number(eventIdParam) : null,
 			timezone: browserTimeZone,
 			status: "Upcoming",
 			scheduled_start: "",

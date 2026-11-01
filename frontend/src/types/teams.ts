@@ -23,6 +23,7 @@ export type TeamOverview = {
 
 export type TeamRosterEntry = {
 	team_name: string,
+	member_id: number,
 	real_name: string,
 	display_name: string,
 	team_position: string,

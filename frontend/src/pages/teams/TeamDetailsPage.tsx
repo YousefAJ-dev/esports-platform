@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { deleteTeamByID, getTeamOverview, getTeamRoster } from "../../api/teamsApi";
 import DetailCard from "../../components/ui/DetailCard";
+import Breadcrumbs from "../../components/ui/Breadcrumbs";
 import StatusMessage from "../../components/ui/StatusMessage";
 import { convertDate } from "../../helper/helperFunctions";
 import { useAsyncData } from "../../hooks/useAsyncData";
+import { useBreadcrumbTrail } from "../../hooks/useBreadcrumbTrail";
 
 export function TeamDetailsPage() {
 
@@ -21,6 +23,9 @@ export function TeamDetailsPage() {
 		"Error fetching team data",
 		id
 	);
+
+	const teamName = data?.overview.team_name ?? `Team #${id}`;
+	const { trail, childTrail } = useBreadcrumbTrail([{ label: "Teams", to: "/teams" }], teamName);
 
 	if (isLoading || errorMsg || !data) {
 		return <StatusMessage isLoading={isLoading} errorMsg={errorMsg ?? "Team not found"} loadingText="Loading team..." />;
@@ -47,6 +52,8 @@ export function TeamDetailsPage() {
 	return (
 		<div className="min-h-screen bg-slate-950 p-6 text-slate-100">
 			<div className="mx-auto max-w-6xl space-y-8">
+
+				<Breadcrumbs trail={trail} current={teamName} />
 
 				{/* Header */}
 				<div className="header-box">
@@ -86,11 +93,16 @@ export function TeamDetailsPage() {
 					) : (
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 							{roster.map(player => (
-								<div key={player.display_name} className="stat-card">
+								<Link
+									key={player.member_id}
+									to={`/members/${player.member_id}`}
+									state={{ trail: childTrail }}
+									className="stat-card stat-card-clickable"
+								>
 									<p className="light-text">{player.team_position}</p>
 									<p className="value-text">{player.display_name}</p>
 									<p className="mt-1 text-slate-400">{player.real_name} · since {convertDate(player.start_date)}</p>
-								</div>
+								</Link>
 							))}
 						</div>
 					)}

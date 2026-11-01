@@ -137,6 +137,7 @@ router.get('/:id/overview', async (req, res) => {
 			SELECT
 			m.real_name, 
 			m.display_name,
+			t.team_id,
 			t.team_name,
 			
 			EXTRACT(YEAR FROM AGE(CURRENT_DATE, m.date_of_birth))::INT AS age,
@@ -170,7 +171,7 @@ router.get('/:id/overview', async (req, res) => {
 			ON s.event_id = e.event_id
 
 			WHERE m.member_id = $1
-			GROUP BY m.real_name, m.display_name, t.team_name,
+			GROUP BY m.real_name, m.display_name, t.team_id, t.team_name,
 					m.date_of_birth, tm.team_position, m.is_active, 
 					tm.team_member_id
 			ORDER BY tm.team_member_id DESC

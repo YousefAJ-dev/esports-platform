@@ -1,71 +1,64 @@
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { Link, useParams } from "react-router";
-import type { EventOverview, EventSummary } from "../../types/events";
-import { getEventByID, getEventOverview } from "../../api/eventsApi";
+import { getEventByID, getEventMatches, getEventOverview } from "../../api/eventsApi";
+import Breadcrumbs from "../../components/ui/Breadcrumbs";
+import EventBracket from "../../components/ui/EventBracket";
+import MatchCard from "../../components/ui/MatchCard";
+import StatusMessage from "../../components/ui/StatusMessage";
 import { convertDate } from "../../helper/helperFunctions";
+import { useAsyncData } from "../../hooks/useAsyncData";
+import { useBreadcrumbTrail } from "../../hooks/useBreadcrumbTrail";
 
 export function EventDetailPage() {
 
 	const { id } = useParams();
 
-	const [event, setEvent] = useState<EventSummary | null>(null);
-	const [eventOverview, setEventOverview] = useState<EventOverview | null>(null);
-	const [errorMsg, setErrorMsg] = useState<string | null>(null);
-	const [isLoading, setIsLoading] = useState<boolean>(true);
+	// Event, overview and matches don't depend on each other, so load them in parallel
+	const { data, errorMsg, isLoading } = useAsyncData(
+		async () => {
+			const [event, overview, matches] = await Promise.all([
+				getEventByID(id),
+				getEventOverview(id),
+				getEventMatches(id)
+			]);
+			return { event, overview, matches };
+		},
+		"Failed to fetch Event Data",
+		id
+	);
 
-	useEffect(() => {
-		if (!id) {
-			setErrorMsg(`Could not find Event ID: ${id}`);
-			setIsLoading(false);
-			return;
-		}
+	const { trail, childTrail } = useBreadcrumbTrail(
+		[{ label: "Events", to: "/events" }],
+		data?.event.event_name ?? `Event #${id}`
+	);
 
-		async function loadEventData() {
-			
-			try {
-				const data1 = await getEventByID(id);
-				setEvent(data1);
+	// Chronological copy for the match list; the bracket keeps the round order from the API
+	const schedule = useMemo(
+		() => [...(data?.matches ?? [])].sort(
+			(a, b) => new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime()
+		),
+		[data]
+	);
 
-				const data2 = await getEventOverview(id);
-				setEventOverview(data2);
-
-			} catch {
-				setErrorMsg("Failed to fetch Event Data");
-			} finally {
-				setIsLoading(false);
-			}
-		}
-
-		loadEventData();
-	}, [id]);
-
-	if (isLoading) {
-		return (
-			<section className="min-h-screen bg-slate-950 p-6 text-slate-100">
-				<p className="text-purple-300">Loading events...</p>
-			</section>
-		);
+	if (isLoading || errorMsg || !data) {
+		return <StatusMessage isLoading={isLoading} errorMsg={errorMsg ?? "No event found."} loadingText="Loading event..." />;
 	}
 
-	if (errorMsg) {
-		return <p>{errorMsg}</p>;
-	}
-
-	if (!event) {
-		return <p>No event found.</p>;
-	}
+	const { event, overview, matches } = data;
 
 	return (
 	<div className="min-h-screen bg-slate-950 p-6 text-slate-100">
 		<div className="mx-auto max-w-6xl space-y-8">
-			
+
+			<Breadcrumbs trail={trail} current={event.event_name} />
+
 			{/* Header */}
-			<div className="rounded-2xl border border-purple-900/50 bg-gradient-to-br from-slate-900 to-purple-950 p-6 shadow-lg shadow-purple-950/30">
+			<div className="header-box">
 				<p className="text-sm font-medium text-purple-300">
 					Event ID: {event.event_id}
 				</p>
 
-				<h1 className="mt-2 text-4xl font-bold text-white">
+				<h1 className="header-text">
 					{event.event_name}
 				</h1>
 
@@ -77,7 +70,7 @@ export function EventDetailPage() {
 			{/* Event Details */}
 			<section>
 				<div className="flex justify-end">
-					<Link 
+					<Link
 					to={ `/events/${event.event_id}/edit` }
 					className="green-btn green-btn-clickable">
 						Edit
@@ -120,47 +113,78 @@ export function EventDetailPage() {
 			</section>
 
 			{/* Overview */}
-			{eventOverview && (
+			<section>
+				<h2 className="mb-4 text-2xl font-semibold text-white">
+					Overview
+				</h2>
+
+				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+					<div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+						<p className="text-sm text-slate-400">Matches</p>
+						<p className="mt-2 text-3xl font-bold text-white">
+							{overview.session_count}
+						</p>
+					</div>
+
+					<div className="stat-card">
+						<p className="text-sm text-slate-400">Completed</p>
+						<p className="mt-2 text-3xl font-bold text-white">
+							{overview.completed_session_count}
+						</p>
+					</div>
+
+					<div className="stat-card">
+						<p className="text-sm text-purple-300">Ongoing</p>
+						<p className="mt-2 text-3xl font-bold text-purple-100">
+							{overview.ongoing_session_count}
+						</p>
+					</div>
+
+					<div className="stat-card">
+						<p className="text-sm text-slate-400">Upcoming</p>
+						<p className="mt-2 text-3xl font-bold text-white">
+							{overview.upcoming_session_count}
+						</p>
+					</div>
+
+					<div className="stat-card">
+						<p className="text-sm text-slate-400">Teams</p>
+						<p className="mt-2 text-3xl font-bold text-white">
+							{overview.team_count}
+						</p>
+					</div>
+				</div>
+			</section>
+
+			{/* Bracket */}
+			<section>
+				<div className="mb-4 flex items-center justify-between">
+					<h2 className="text-2xl font-semibold text-white">
+						Bracket
+					</h2>
+					{/* Prefills the event on the create form */}
+					<Link
+						to={`/sessions/new?event_id=${event.event_id}`}
+						className="green-btn green-btn-clickable"
+					>
+						Add Match
+					</Link>
+				</div>
+
+				<EventBracket matches={matches} trail={childTrail} />
+			</section>
+
+			{/* Match Schedule */}
+			{schedule.length > 0 && (
 				<section>
 					<h2 className="mb-4 text-2xl font-semibold text-white">
-						Overview
+						Matches
 					</h2>
 
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-						<div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
-							<p className="text-sm text-slate-400">Matches</p>
-							<p className="mt-2 text-3xl font-bold text-white">
-								{eventOverview.session_count}
-							</p>
-						</div>
-
-						<div className="stat-card">
-							<p className="text-sm text-slate-400">Completed</p>
-							<p className="mt-2 text-3xl font-bold text-white">
-								{eventOverview.completed_session_count}
-							</p>
-						</div>
-
-						<div className="stat-card">
-							<p className="text-sm text-purple-300">Ongoing</p>
-							<p className="mt-2 text-3xl font-bold text-purple-100">
-								{eventOverview.ongoing_session_count}
-							</p>
-						</div>
-
-						<div className="stat-card">
-							<p className="text-sm text-slate-400">Upcoming</p>
-							<p className="mt-2 text-3xl font-bold text-white">
-								{eventOverview.upcoming_session_count}
-							</p>
-						</div>
-
-						<div className="stat-card">
-							<p className="text-sm text-slate-400">Teams</p>
-							<p className="mt-2 text-3xl font-bold text-white">
-								{eventOverview.team_count}
-							</p>
-						</div>
+					<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+						{schedule.map(match => (
+							<MatchCard key={match.session_id} match={match} trail={childTrail} showRound />
+						))}
 					</div>
 				</section>
 			)}

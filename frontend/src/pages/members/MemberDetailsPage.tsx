@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { deleteMemberByID, getMemberOverview } from "../../api/membersApi";
+import Breadcrumbs from "../../components/ui/Breadcrumbs";
 import DetailCard from "../../components/ui/DetailCard";
 import StatusMessage from "../../components/ui/StatusMessage";
 import { useAsyncData } from "../../hooks/useAsyncData";
+import { useBreadcrumbTrail } from "../../hooks/useBreadcrumbTrail";
 
 export function MemberDetailsPage() {
 
@@ -14,6 +16,9 @@ export function MemberDetailsPage() {
 	const { data: member, errorMsg, isLoading } = useAsyncData(
 		() => getMemberOverview(id), "Error fetching member data", id
 	);
+
+	const memberName = member?.display_name ?? `Member #${id}`;
+	const { trail, childTrail } = useBreadcrumbTrail([{ label: "Members", to: "/members" }], memberName);
 
 	if (isLoading || errorMsg || !member) {
 		return <StatusMessage isLoading={isLoading} errorMsg={errorMsg ?? "Member not found"} loadingText="Loading member..." />;
@@ -34,6 +39,8 @@ export function MemberDetailsPage() {
 	return (
 		<div className="min-h-screen bg-slate-950 p-6 text-slate-100">
 			<div className="mx-auto max-w-6xl space-y-8">
+
+				<Breadcrumbs trail={trail} current={memberName} />
 
 				{/* Header */}
 				<div className="header-box">
@@ -56,7 +63,15 @@ export function MemberDetailsPage() {
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 						<DetailCard title="Real Name" value={member.real_name} />
 						<DetailCard title="Display Name" value={member.display_name} />
-						<DetailCard title="Current Team" value={member.team_name} />
+						{/* Current team links through when the member is on one */}
+						{member.team_id ? (
+							<Link to={`/teams/${member.team_id}`} state={{ trail: childTrail }} className="stat-card stat-card-clickable">
+								<p className="light-text">Current Team</p>
+								<p className="value-text">{member.team_name}</p>
+							</Link>
+						) : (
+							<DetailCard title="Current Team" value={member.team_name} />
+						)}
 						<DetailCard title="Age" value={member.age} />
 						<DetailCard title="Team Position" value={member.team_position} />
 						<DetailCard title="Member Activity" value={member.is_active} highlight />

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { getMissingFields } = require('../utils/validation');
 const pool = require('../db/pool');
+const { handleDbError } = require('../utils/dbErrors');
 
 
 // POST sessions
@@ -74,25 +75,24 @@ router.post('/', async (req, res) => {
 			scheduled_end, 
 			actual_start, 
 			actual_end, 
-			session_type, 
 			timezone, 
 			status
 			)
 			VALUES (
 			$1,
 			$2,
-			$3::timestamp AT TIME ZONE $8,
-			$4::timestamp AT TIME ZONE $8,
-			$5,
-			$6,
+			$3::timestamp AT TIME ZONE $7,
+			$4::timestamp AT TIME ZONE $7,
+			$5::timestamp AT TIME ZONE $7,
+			$6::timestamp AT TIME ZONE $7,
 			$7,
-			$8,
-			$9
+			$8
 			)
-			RETURNING session_id, session_type, scheduled_start, scheduled_end, session_type, timezone, status;
+			RETURNING session_id, event_id, session_type, scheduled_start, scheduled_end, timezone, status;
 			`
+			// The create form sends "" for blank actual times, which Postgres can't cast
 			, [event_id, session_type, scheduled_start, scheduled_end,
-				actual_start ?? null, actual_end ?? null, session_type, 
+				actual_start || null, actual_end || null,
 				timezone, status ?? "Upcoming"]
 		);
 
@@ -196,21 +196,46 @@ router.get('/:id/teams', async (req, res) => {
 
 		const result = await pool.query(
 			`
-			SELECT st.session_id, s.session_type, st.team_id, t.team_name
+			-- Player counts come from a pre-aggregated subquery so the
+			-- manager join can't multiply rows
+			SELECT
+				st.team_id,
+				t.team_name,
+				CONCAT_WS(' ', u.first_name, u.last_name) AS manager_name,
+				COALESCE(pc.player_count, 0)::INT AS player_count,
+				md.score,
+				COALESCE(md.is_winner, FALSE) AS is_winner
+
 			FROM session_teams st
-			JOIN sessions s
-			ON st.session_id = s.session_id
+
 			JOIN teams t
-			ON st.team_id = t.team_id
-			WHERE s.session_id = $1
+				ON st.team_id = t.team_id
+
+			LEFT JOIN team_users tu
+				ON t.team_id = tu.team_id
+				AND tu.end_date IS NULL
+
+			LEFT JOIN users u
+				ON tu.user_id = u.user_id
+
+			LEFT JOIN (
+				SELECT team_id, COUNT(*) AS player_count
+				FROM team_members
+				WHERE end_date IS NULL
+				GROUP BY team_id
+			) pc
+				ON t.team_id = pc.team_id
+
+			LEFT JOIN match_details md
+				ON st.session_id = md.session_id
+				AND st.team_id = md.team_id
+
+			WHERE st.session_id = $1
+			ORDER BY st.session_team_id
 			`, [id]
 		);
 
-		if (result.rows.length === 0) {
-			return res.status(404).json({
-				error: `Could not find Session Team with ID: ${id}`
-			});
-		}
+		// A match with no teams yet is valid, so an empty list is returned instead of a 404
 
 		return res.status(200).json(result.rows);
 
@@ -314,6 +339,71 @@ router.get('/:id/overview', async (req, res) => {
 
 		return res.status(500).json({ error: "Internal Server Error" });
 
+	}
+
+});
+
+
+// PUT api/sessions/:id/results - save every team's score/winner for a match in one transaction
+router.put('/:id/results', async (req, res) => {
+
+	const id = parseInt(req.params.id);
+
+	if (isNaN(id)) {
+		return res.status(400).json({ error: `Error invalid ID: ${req.params.id}` });
+	}
+
+	const { results } = req.body;
+
+	if (!Array.isArray(results) || results.length === 0) {
+		return res.status(400).json({ error: "results must be a non-empty array" });
+	}
+
+	if (results.filter(r => r.is_winner).length > 1) {
+		return res.status(400).json({ error: "A match can only have one winner" });
+	}
+
+	// Split into column arrays so all rows go up in a single unnest() insert
+	const teamIds = results.map(r => r.team_id);
+	const scores = results.map(r => (r.score === "" || r.score === undefined ? null : r.score));
+	const winners = results.map(r => Boolean(r.is_winner));
+
+	const client = await pool.connect();
+
+	try {
+
+		await client.query('BEGIN');
+
+		// Clear the old winner first so moving the win to another team doesn't trip uq_match_winner
+		await client.query(
+			`UPDATE match_details SET is_winner = FALSE WHERE session_id = $1`,
+			[id]
+		);
+
+		const result = await client.query(
+			`
+			INSERT INTO match_details (session_id, team_id, score, is_winner)
+			SELECT $1, r.team_id, r.score, r.is_winner
+			FROM unnest($2::int[], $3::int[], $4::bool[]) AS r(team_id, score, is_winner)
+			ON CONFLICT (session_id, team_id)
+			DO UPDATE SET score = EXCLUDED.score, is_winner = EXCLUDED.is_winner
+			RETURNING match_detail_id, session_id, team_id, score, is_winner
+			`,
+			[id, teamIds, scores, winners]
+		);
+
+		await client.query('COMMIT');
+
+		return res.status(200).json(result.rows);
+
+	} catch (error) {
+
+		await client.query('ROLLBACK');
+
+		return handleDbError(error, res, "saving");
+
+	} finally {
+		client.release();
 	}
 
 });

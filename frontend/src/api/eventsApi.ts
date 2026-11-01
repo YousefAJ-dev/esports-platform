@@ -1,5 +1,6 @@
 import { apiRequest } from "./apiClient";
 import type { CreateEventPayload, EventOverview, EventSummary, UpdateEventPayload } from "../types/events";
+import type { EventMatch } from "../types/sessions";
 
 
 /* Typescript Template
@@ -34,4 +35,9 @@ export function createEvent(eventData: CreateEventPayload):Promise<EventSummary>
 		method: "POST",
 		body: JSON.stringify(eventData),
 	});
+}
+
+// All matches in an event with their teams and results, already sorted by round
+export function getEventMatches(id: string | undefined): Promise<EventMatch[]> {
+	return apiRequest<EventMatch[]>(`/events/${id}/matches`);
 }

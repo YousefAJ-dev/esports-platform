@@ -185,17 +185,19 @@ router.get('/:id/roster', async (req, res) => {
 			`
 			SELECT
 				t.team_name,
+				m.member_id,
 				m.real_name,
 				m.display_name,
 				tm.team_position,
 				tm.start_date
 			FROM teams t
 
-			LEFT JOIN team_members tm
+			-- Inner joins so an empty team returns [] instead of one all-null row
+			JOIN team_members tm
 				ON t.team_id = tm.team_id
 				AND tm.end_date IS NULL
 
-			LEFT JOIN members m
+			JOIN members m
 				ON tm.member_id = m.member_id
 
 			WHERE t.team_id = $1

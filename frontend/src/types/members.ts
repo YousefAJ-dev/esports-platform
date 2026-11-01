@@ -10,6 +10,7 @@ export type MemberSummary = {
 export type MemberOverview = {
 	real_name: string,
 	display_name: string,
+	team_id: number | null,
 	team_name: string | null,
 	age: number,
 	team_position: string | null,

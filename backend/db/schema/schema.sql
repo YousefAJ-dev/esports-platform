@@ -11,5 +11,6 @@
 \i db/schema/009_roles.sql
 \i db/schema/006_team_members.sql
 \i db/schema/007_session_teams.sql
+\i db/schema/012_match_details.sql
 \i db/schema/010_team_users.sql
 \i db/schema/011_user_roles.sql

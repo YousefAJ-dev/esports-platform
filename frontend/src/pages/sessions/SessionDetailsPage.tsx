@@ -1,70 +1,53 @@
-import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
-import { getSessionByID, getSessionOverview } from "../../api/sessionsApi";
-import type { SessionOverview, SessionSummary } from "../../types/sessions";
+import { getSessionByID, getSessionOverview, getSessionTeams } from "../../api/sessionsApi";
+import Breadcrumbs from "../../components/ui/Breadcrumbs";
+import StatusMessage from "../../components/ui/StatusMessage";
 import { convertDate } from "../../helper/helperFunctions";
+import { useAsyncData } from "../../hooks/useAsyncData";
+import { useBreadcrumbTrail } from "../../hooks/useBreadcrumbTrail";
 
 export function SessionDetailsPage() {
 
 	const { id } = useParams();
 
-	const [session, setSession] = useState<SessionSummary | null>(null);
-	const [sessionOverview, setSessionOverview] = useState<SessionOverview | null>(null);
-	const [errorMsg, setErrorMsg] = useState<string | null>(null);
-	const [isLoading, setIsLoading] = useState<boolean>(true);
+	// The three requests are independent, so run them in parallel
+	const { data, errorMsg, isLoading } = useAsyncData(
+		async () => {
+			const [session, overview, teams] = await Promise.all([
+				getSessionByID(id),
+				getSessionOverview(id),
+				getSessionTeams(id)
+			]);
+			return { session, overview, teams };
+		},
+		"Error fetching Session Data",
+		id
+	);
 
-	useEffect(() => {
+	const matchLabel = data ? `${data.session.session_type} #${data.session.session_id}` : `Match #${id}`;
 
-		if (!id) {
-			setErrorMsg(`Could not find ID: ${id}`);
-			setIsLoading(false);
-			return;
-		}
+	// Direct visits fall back to Events / <event> / this match
+	const { trail, childTrail } = useBreadcrumbTrail(
+		data
+			? [
+				{ label: "Events", to: "/events" },
+				{ label: data.overview.event_name, to: `/events/${data.session.event_id}` }
+			]
+			: [{ label: "Matches", to: "/sessions" }],
+		matchLabel
+	);
 
-		async function loadSessionData() {
-
-			try {
-
-				const sessionData = await getSessionByID(id);
-				const overviewData = await getSessionOverview(id);
-				setSession(sessionData);
-				setSessionOverview(overviewData);
-				console.log(sessionData.actual_start);
-
-			} catch {
-				setErrorMsg("Error fetching Sessing Data");
-			} finally {
-				setIsLoading(false);
-			}
-		}
-		loadSessionData();
-	}, [id]);
-
-	if (isLoading) {
-		return (
-			<section className="min-h-screen bg-slate-950 p-6 text-slate-100">
-				<p className="text-purple-300">Loading sessions...</p>
-			</section>
-		);
+	if (isLoading || errorMsg || !data) {
+		return <StatusMessage isLoading={isLoading} errorMsg={errorMsg ?? "Session not found"} loadingText="Loading sessions..." />;
 	}
 
-	if (errorMsg) {
-		return (
-			<section className="min-h-screen bg-slate-950 p-6 text-slate-100">
-				<div className="stat-card">
-					{errorMsg}
-				</div>
-			</section>
-		);
-	}
-
-	if (!session) {
-		return <p>Session not found</p>;
-	}
+	const { session, overview, teams } = data;
 
 	return (
 		<div className="min-h-screen bg-slate-950 p-6 text-slate-100">
 			<div className="mx-auto max-w-6xl space-y-8">
+
+				<Breadcrumbs trail={trail} current={matchLabel} />
 
 				{/* Header */}
 				<div className="header-box">
@@ -119,12 +102,16 @@ export function SessionDetailsPage() {
 							</p>
 						</div>
 
-						<div className="stat-card">
-							<p className="light-text">Event Number</p>
+						{/* Back to the event this match belongs to */}
+						<Link
+							to={`/events/${session.event_id}`}
+							className="stat-card stat-card-clickable"
+						>
+							<p className="light-text">Event</p>
 							<p className="value-text">
-								{session.event_id}
+								{overview.event_name}
 							</p>
-						</div>
+						</Link>
 
 						<div className="stat-card-purple">
 							<p className="light-purple-text">
@@ -136,87 +123,54 @@ export function SessionDetailsPage() {
 						</div>
 					</div>
 				</section>
-				{/* Session Overview */}
-				{sessionOverview && (
-					<section>
-						<h2 className="m-6 text-2xl font-semibold text-white">
-							Session Overview
-						</h2>
-						<main className="flex flex-col gap-6">
-							{/*Event Name*/}
-							<div className="stat-card-purple">
-								<p className="light-purple-text">
-									Event Name:
-								</p>
-								<p className="lighter-purple-text">
-									{sessionOverview.event_name}
-								</p>
-							</div>
-							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
 
-								{/*Team 1*/}
-								<div className="stat-card">
-									<p className="light-text">
-										Team 1
-									</p>
-									<p className="value-text">
-										{sessionOverview.team_1}
-									</p>
-								</div>
+				{/* Teams in this Match */}
+				<section>
+					<h2 className="mb-4 text-2xl font-semibold text-white">
+						Teams in this Match
+					</h2>
 
-								{/*Manager1*/}
-								<div className="stat-card">
-									<p className="light-text">
-										Team 1 Manager
-									</p>
-									<p className="value-text">
-										{sessionOverview.manager_1}
-									</p>
-								</div>
+					{teams.length === 0 ? (
+						<div className="rounded-xl border border-slate-800 bg-slate-900 p-6 text-slate-400">
+							No teams assigned to this match yet.
+						</div>
+					) : (
+						<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+							{teams.map(team => (
+								<Link
+									key={team.team_id}
+									to={`/teams/${team.team_id}`}
+									state={{ trail: childTrail }}
+									className={`${team.is_winner ? "stat-card-purple" : "stat-card"} stat-card-clickable block`}
+								>
+									<div className="stat-card-header">
+										<h3 className="text-xl font-semibold text-white">{team.team_name}</h3>
+										{team.is_winner && <span className="status-pill">Winner</span>}
+									</div>
 
-								{/*playerCount1*/}
-								<div className="stat-card">
-									<p className="light-text">
-										Team 1 Player Count
-									</p>
-									<p className="value-text">
-										{sessionOverview.player_count_1}
-									</p>
-								</div>
+									<div className="stat-body">
+										<div className="stat-field-grid">
+											<div>
+												<p className="text-slate-500">Score</p>
+												<p className="stat-field-value">{team.score ?? "–"}</p>
+											</div>
+											<div>
+												<p className="text-slate-500">Players</p>
+												<p className="stat-field-value">{team.player_count}</p>
+											</div>
+										</div>
+										<div>
+											<p className="text-slate-500">Manager</p>
+											<p className="stat-field-value">{team.manager_name || "N/A"}</p>
+										</div>
+									</div>
 
-								{/*Team 2*/}
-								<div className="stat-card">
-									<p className="light-text">
-										Team 2
-									</p>
-									<p className="value-text">
-										{sessionOverview.team_2}
-									</p>
-								</div>
-
-								{/*Manager 2*/}
-								<div className="stat-card">
-									<p className="light-text">
-										Team 2 Manager
-									</p>
-									<p className="value-text">
-										{sessionOverview.manager_2}
-									</p>
-								</div>
-
-								{/*playerCount 2*/}
-								<div className="stat-card">
-									<p className="light-text">
-										Team 2 Player Count
-									</p>
-									<p className="value-text">
-										{sessionOverview.player_count_2}
-									</p>
-								</div>
-							</div>
-						</main>
-					</section>
-				)}
+									<p className="stat-link-text">View team →</p>
+								</Link>
+							))}
+						</div>
+					)}
+				</section>
 			</div>
 		</div>
 	);

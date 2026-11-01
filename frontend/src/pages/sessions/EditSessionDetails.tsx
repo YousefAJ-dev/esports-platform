@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router";
 import { convertDateToInput, inputChangeHandler } from "../../helper/helperFunctions";
 import type { SessionSummary } from "../../types/sessions";
 import { getSessionByID, updateSessionByID } from "../../api/sessionsApi";
+import MatchResultsForm from "../../components/ui/MatchResultsForm";
 
 export function EditSessionDetails() {
 
@@ -226,6 +227,10 @@ export function EditSessionDetails() {
 					<button type="submit" className="green-btn green-btn-clickable mt-10 mb-5">Save Changes</button>
 				</div>
 			</form>
+
+			{/* Match Results */}
+			<h2 className="mt-6 text-2xl font-semibold text-white">Results</h2>
+			<MatchResultsForm sessionId={id} />
 		</section>
 	);
 
