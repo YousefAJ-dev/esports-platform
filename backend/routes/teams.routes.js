@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require("../db/pool");
 const { getMissingFields } = require('../utils/validation');
+const { handleRuleError, assertCanJoinTeam } = require('../utils/businessRules');
 
 
 // POST api/teams
@@ -161,6 +162,94 @@ router.get('/:id/members', async (req, res) => {
 	} catch (error) {
 
 		console.error("Error getting team members");
+
+		return res.status(500).json({ error: "Internal Server Error" });
+
+	}
+
+});
+
+
+// POST api/teams/:id/members - add a member to this team's roster
+router.post('/:id/members', async (req, res) => {
+
+	try {
+
+		const id = parseInt(req.params.id);
+
+		if (isNaN(id)) {
+			return res.status(400).json({ error: "Not a valid team ID" });
+		}
+
+		const missingFields = getMissingFields(['member_id', 'team_position'], req.body);
+
+		if (missingFields.length > 0) {
+			return res.status(400).json({ error: `Missing Fields: ${missingFields}` });
+		}
+
+		const { member_id, team_position, start_date } = req.body;
+
+		await assertCanJoinTeam(pool, id, member_id, team_position);
+
+		// The partial unique indexes still catch two requests racing past the checks above
+		const result = await pool.query(
+			`
+			INSERT INTO team_members (team_id, member_id, start_date, team_position)
+			VALUES ($1, $2, COALESCE($3::date, CURRENT_DATE), $4)
+			RETURNING team_member_id, team_id, member_id, start_date, team_position
+			`,
+			[id, member_id, start_date || null, team_position]
+		);
+
+		return res.status(201).json(result.rows[0]);
+
+	} catch (error) {
+
+		if (handleRuleError(error, res)) return;
+
+		console.error("Error adding member to team:", error.message);
+
+		return res.status(500).json({ error: "Internal Server Error" });
+
+	}
+
+});
+
+
+// DELETE api/teams/:id/members/:memberId - remove a member from the roster.
+// Ends the membership instead of deleting it so team history is kept.
+router.delete('/:id/members/:memberId', async (req, res) => {
+
+	try {
+
+		const id = parseInt(req.params.id);
+		const memberId = parseInt(req.params.memberId);
+
+		if (isNaN(id) || isNaN(memberId)) {
+			return res.status(400).json({ error: "Not a valid team or member ID" });
+		}
+
+		const result = await pool.query(
+			`
+			UPDATE team_members
+			SET end_date = GREATEST(start_date, CURRENT_DATE)
+			WHERE team_id = $1
+				AND member_id = $2
+				AND end_date IS NULL
+			RETURNING team_member_id, team_id, member_id, start_date, end_date, team_position
+			`,
+			[id, memberId]
+		);
+
+		if (result.rows.length === 0) {
+			return res.status(404).json({ error: "Member is not currently on this team" });
+		}
+
+		return res.status(200).json(result.rows[0]);
+
+	} catch (error) {
+
+		console.error("Error removing member from team:", error.message);
 
 		return res.status(500).json({ error: "Internal Server Error" });
 

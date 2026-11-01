@@ -4,6 +4,9 @@ import { useNavigate, useSearchParams } from "react-router";
 import { getTimeRangeError, inputChangeHandler } from "../../helper/helperFunctions";
 import FormError from "../../components/ui/FormError";
 import { createSession } from "../../api/sessionsApi";
+import { getTeams } from "../../api/teamsApi";
+import { useAsyncData } from "../../hooks/useAsyncData";
+import MatchTeamPicker, { type TeamSlots } from "../../components/ui/MatchTeamPicker";
 
 export function CreateSessionPage() {
 
@@ -27,7 +30,12 @@ export function CreateSessionPage() {
 		'Exhibition'
 	];
 
-	const [formData, setFormData] = useState<CreateSessionPayload>(
+	const { data: teams, errorMsg: teamsError } = useAsyncData(getTeams, "Error fetching teams", "teams");
+
+	// team_ids is filled from these slots on submit
+	const [teamSlots, setTeamSlots] = useState<TeamSlots>(["", ""]);
+
+	const [formData, setFormData] = useState<Omit<CreateSessionPayload, "team_ids">>(
 		{
 			event_id: eventIdParam ? Number(eventIdParam) : null,
 			timezone: browserTimeZone,
@@ -57,7 +65,7 @@ export function CreateSessionPage() {
 		if (timeError) return;
 
 		try {
-			const session = await createSession(formData);
+			const session = await createSession({ ...formData, team_ids: teamSlots.map(Number) });
 			navigate(`/sessions/${session.session_id}`)
 		} catch (error) {
 			setSubmitError(error instanceof Error ? error.message : "Error creating match");
@@ -112,6 +120,9 @@ export function CreateSessionPage() {
 								<option key={type} id={type} value={type}>{type}</option>
 							))}
 						</select>
+
+						{/* Teams - a match is always between two teams */}
+						<MatchTeamPicker teams={teams ?? []} value={teamSlots} onChange={setTeamSlots} />
 
 						{/* Scheduled Start */}
 						<label htmlFor="scheduled_start" className="text-lg mb-2">
@@ -214,7 +225,7 @@ export function CreateSessionPage() {
 
 					</div>
 
-					<FormError message={timeError ?? submitError} />
+					<FormError message={timeError ?? teamsError ?? submitError} />
 
 					<div>
 						<button type="submit" disabled={timeError !== null} className="green-btn green-btn-clickable mt-10 mb-5 disabled:cursor-not-allowed disabled:opacity-50">Save Changes</button>

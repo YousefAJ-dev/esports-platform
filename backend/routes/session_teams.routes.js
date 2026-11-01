@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db/pool');
 const { getMissingFields } = require('../utils/validation');
+const { handleRuleError, assertSessionEditable, assertTeamsCanPlay } = require('../utils/businessRules');
 
 
 router.post('/', async (req, res) => {
@@ -15,7 +16,7 @@ router.post('/', async (req, res) => {
 
 		const missingFields = getMissingFields(requiredFields, req.body);
 
-		if (missingFields > 0){
+		if (missingFields.length > 0){
 			return res.status(400).json({
 				error: "Missing Required Fields",
 				missing: missingFields
@@ -24,50 +25,9 @@ router.post('/', async (req, res) => {
 
 		const { session_id, team_id } = req.body;
 
-		const fk_session_check = await pool.query(
-			`
-			SELECT session_name
-			FROM sessions
-			WHERE session_id = $1
-			`,
-			[session_id]
-		);
-
-		if (fk_session_check.rows.length === 0) {
-			return res.status(404).json({
-				error: `Could not find Session ID: ${session_id}`
-			});
-		}
-
-		const fk_team_check = await pool.query(
-			`
-			SELECT team_name
-			FROM teams
-			WHERE team_id = $1
-			`,
-			[team_id]
-		);
-
-		if (fk_team_check.rows.length === 0) {
-			return res.status(404).json({
-				error: `Could not find Team ID: ${team_id}`
-			});
-		}
-
-		const br_check = await pool.query(
-			`
-			SELECT team_id
-			FROM teams
-			WHERE team_id = $1
-			`,
-			[team_id]
-		);
-
-		if (br_check.length > 0) {
-			return res.status(400).json({
-				error: `Team:${team_id} already apart of session:${session_id}`
-			});
-		}
+		// Session must exist and not be completed; team must exist, be active and not be double-booked
+		await assertSessionEditable(pool, session_id);
+		await assertTeamsCanPlay(pool, session_id, [Number(team_id)]);
 
 		const team_count_result = await pool.query(
 			`
@@ -95,9 +55,11 @@ router.post('/', async (req, res) => {
 			[session_id, team_id]
 		);
 
-		return res.status(200).json(result.rows[0]);
+		return res.status(201).json(result.rows[0]);
 
 	} catch (error) {
+
+		if (handleRuleError(error, res)) return;
 
 		console.error("Error creating a session with team:", error.message);
 
@@ -114,7 +76,7 @@ router.get('/', async (req, res) => {
 
 		const result = await pool.query(
 			`
-			SELECT st.session_team_id, st.session_id, s.session_name, st.team_id, t.team_name
+			SELECT st.session_team_id, st.session_id, s.session_type, st.team_id, t.team_name
 			FROM session_teams st
 			JOIN sessions s
 			ON st.session_id = s.session_id
@@ -151,7 +113,7 @@ router.get('/:id', async (req, res) => {
 
 		const result = await pool.query(
 			`
-			SELECT st.session_team_id, st.session_id, s.session_name, st.team_id, t.team_name
+			SELECT st.session_team_id, st.session_id, s.session_type, st.team_id, t.team_name
 			FROM session_teams st
 			JOIN sessions s
 			ON st.session_id = s.session_id

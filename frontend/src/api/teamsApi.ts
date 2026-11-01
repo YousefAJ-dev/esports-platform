@@ -1,4 +1,4 @@
-import type { CreateTeamPayload, TeamOverview, TeamRosterEntry, TeamSummary, UpdateTeamPayload } from "../types/teams";
+import type { AddTeamMemberPayload, CreateTeamPayload, TeamOverview, TeamRosterEntry, TeamSummary, UpdateTeamPayload } from "../types/teams";
 import { apiRequest } from "./apiClient";
 
 export function getTeams(): Promise<TeamSummary[]> {
@@ -15,6 +15,15 @@ export function getTeamOverview(id: string | undefined): Promise<TeamOverview> {
 
 export function getTeamRoster(id: string | undefined): Promise<TeamRosterEntry[]> {
 	return apiRequest<TeamRosterEntry[]>(`/teams/${id}/roster`);
+}
+
+export function addTeamMember(id: string | undefined, payload: AddTeamMemberPayload): Promise<unknown> {
+	return apiRequest<unknown>(`/teams/${id}/members`, { method: "POST", body: JSON.stringify(payload) });
+}
+
+// Ends the membership (keeps history) rather than deleting it
+export function removeTeamMember(id: string | undefined, memberId: number): Promise<unknown> {
+	return apiRequest<unknown>(`/teams/${id}/members/${memberId}`, { method: "DELETE" });
 }
 
 export function createTeam(teamData: CreateTeamPayload): Promise<TeamSummary> {

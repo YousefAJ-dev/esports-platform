@@ -1,4 +1,4 @@
-import type { CreateSessionPayload, MatchResult, MatchResultPayload, SessionOverview, SessionSummary, SessionTeam, UpdateSessionPayload } from "../types/sessions";
+import type { CreateSessionPayload, MatchResult, MatchResultPayload, MatchTeamsPayload, SessionOverview, SessionSummary, SessionTeam, UpdateSessionPayload } from "../types/sessions";
 import { apiRequest } from "./apiClient";
 
 export function getSessions(): Promise<SessionSummary[]> {
@@ -36,6 +36,14 @@ export function createSession(
 
 export function getSessionTeams(id: string | undefined): Promise<SessionTeam[]> {
 	return apiRequest<SessionTeam[]>(`/sessions/${id}/teams`);
+}
+
+// Replaces the two teams playing a match
+export function updateSessionTeams(id: string | undefined, payload: MatchTeamsPayload): Promise<MatchTeamsPayload> {
+	return apiRequest<MatchTeamsPayload>(`/sessions/${id}/teams`, {
+		method: "PUT",
+		body: JSON.stringify(payload),
+	});
 }
 
 // Saves every team's score/winner for a match in one request

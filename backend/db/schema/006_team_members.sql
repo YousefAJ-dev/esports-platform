@@ -17,3 +17,13 @@ CREATE TABLE team_members (
 	FOREIGN KEY (team_id)
 	REFERENCES teams(team_id)
 );
+
+-- A member can only be on one team at a time (an open membership has no end_date)
+CREATE UNIQUE INDEX uq_active_team_member
+	ON team_members(member_id)
+	WHERE end_date IS NULL;
+
+-- At most one active captain per team
+CREATE UNIQUE INDEX uq_team_captain
+	ON team_members(team_id)
+	WHERE team_position = 'Captain' AND end_date IS NULL;

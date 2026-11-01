@@ -3,6 +3,7 @@ const router = express.Router();
 exports.router = router;
 const pool = require('../db/pool');
 const { getMissingFields } = require('../utils/validation');
+const { handleRuleError, assertCanJoinTeam } = require('../utils/businessRules');
 
 
 router.post('/', async (req, res) => {
@@ -33,54 +34,8 @@ router.post('/', async (req, res) => {
 			});
 		}
 
-		// Team_id FK check
-		const team_id_check = await pool.query(
-			`
-			SELECT team_id
-			FROM teams
-			WHERE team_id = $1
-			`,
-			[team_id]
-		);
-
-		if (team_id_check.rows.length === 0) {
-			return res.status(400).json({
-				error: `Invalid Team ID: ${team_id}`
-			});
-		}
-
-		// member_id FK check
-		const member_id_check = await pool.query(
-			`
-			SELECT member_id
-			FROM members
-			WHERE member_id = $1
-			`,
-			[member_id]
-		);
-
-		if (member_id_check.rows.length === 0) {
-			return res.status(400).json({
-				error: `Invalid Member ID: ${member_id}`
-			});
-		}
-
-		// Check if the member is NOT currently active on another team 
-		const member_rule_check = await pool.query(
-			`
-			SELECT team_member_id, team_id, member_id
-			FROM team_members
-			WHERE member_id = $1
-			AND end_date IS NULL
-			`
-			, [member_id]
-		);
-
-		if (member_rule_check.rows.length > 0) {
-			return res.status(400).json({
-				error: "Member must not already be a part of a team"
-			})
-		}
+		// Team/member must exist and be active, member can't already be on a team, one captain per team
+		await assertCanJoinTeam(pool, team_id, member_id, team_position);
 
 		const result = await pool.query(
 			`
@@ -96,6 +51,8 @@ router.post('/', async (req, res) => {
 		return res.status(201).json(result.rows[0]);
 
 	} catch (error) {
+
+		if (handleRuleError(error, res)) return;
 
 		console.error("Error assigning member to team: ", error.message);
 
@@ -177,7 +134,7 @@ router.get('/:id', async (req, res) => {
 			ON tm.team_id = t.team_id
 			JOIN members m 
 			ON tm.member_id = m.member_id
-			WHERE tm.team_member_id
+			WHERE tm.team_member_id = $1
 			`
 			, [id]
 		);
@@ -223,7 +180,7 @@ router.patch('/:id', async (req, res) => {
 
 		let fields = [];
 		let values = [];
-		let index = [];
+		let index = 1;
 
 		Object.keys(req.body).forEach(field => {
 			if (allowedFields.includes(field)) {
@@ -260,6 +217,9 @@ router.patch('/:id', async (req, res) => {
 
 
 	} catch (error) {
+
+		// e.g. reopening a membership for a member who has since joined another team
+		if (handleRuleError(error, res)) return;
 
 		console.error("Error updating team member");
 

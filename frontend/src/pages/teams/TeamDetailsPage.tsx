@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
-import { deleteTeamByID, getTeamOverview, getTeamRoster } from "../../api/teamsApi";
+import { deleteTeamByID, getTeamOverview, getTeamRoster, removeTeamMember } from "../../api/teamsApi";
+import AddPlayerForm from "../../components/ui/AddPlayerForm";
 import DetailCard from "../../components/ui/DetailCard";
 import Breadcrumbs from "../../components/ui/Breadcrumbs";
 import StatusMessage from "../../components/ui/StatusMessage";
@@ -13,6 +14,9 @@ export function TeamDetailsPage() {
 	const { id } = useParams();
 	const navigate = useNavigate();
 	const [actionError, setActionError] = useState<string | null>(null);
+	// Bumped after a roster change so the overview, roster and member list reload
+	const [rosterVersion, setRosterVersion] = useState<number>(0);
+	const refreshRoster = () => setRosterVersion(v => v + 1);
 
 	// Overview and roster are independent, so fetch them in parallel
 	const { data, errorMsg, isLoading } = useAsyncData(
@@ -21,7 +25,7 @@ export function TeamDetailsPage() {
 			return { overview, roster };
 		},
 		"Error fetching team data",
-		id
+		`${id}:${rosterVersion}`
 	);
 
 	const teamName = data?.overview.team_name ?? `Team #${id}`;
@@ -44,6 +48,19 @@ export function TeamDetailsPage() {
 			setActionError(error instanceof Error ? error.message : "Failed to delete team");
 		}
 	};
+
+	const handleRemovePlayer = async (memberId: number, displayName: string) => {
+		if (!window.confirm(`Remove ${displayName} from ${overview.team_name}?`)) return;
+
+		try {
+			await removeTeamMember(id, memberId);
+			refreshRoster();
+		} catch (error) {
+			setActionError(error instanceof Error ? error.message : "Failed to remove player");
+		}
+	};
+
+	const hasCaptain = roster.some(player => player.team_position === "Captain");
 
 	const captain = overview.team_captain_dname
 		? `${overview.team_captain_dname} (${overview.team_captain_rname})`
@@ -93,18 +110,36 @@ export function TeamDetailsPage() {
 					) : (
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 							{roster.map(player => (
-								<Link
-									key={player.member_id}
-									to={`/members/${player.member_id}`}
-									state={{ trail: childTrail }}
-									className="stat-card stat-card-clickable"
-								>
-									<p className="light-text">{player.team_position}</p>
-									<p className="value-text">{player.display_name}</p>
-									<p className="mt-1 text-slate-400">{player.real_name} · since {convertDate(player.start_date)}</p>
-								</Link>
+								<div key={player.member_id} className="stat-card flex flex-col">
+									<Link
+										to={`/members/${player.member_id}`}
+										state={{ trail: childTrail }}
+										className="hover:text-purple-300"
+									>
+										<p className="light-text">{player.team_position}</p>
+										<p className="value-text">{player.display_name}</p>
+										<p className="mt-1 text-slate-400">{player.real_name} · since {convertDate(player.start_date)}</p>
+									</Link>
+									<button
+										type="button"
+										onClick={() => handleRemovePlayer(player.member_id, player.display_name)}
+										className="mt-3 self-start text-sm text-slate-400 hover:text-purple-300"
+									>
+										Remove from team
+									</button>
+								</div>
 							))}
 						</div>
+					)}
+				</section>
+
+				{/* Add Player - inactive teams can't take new players */}
+				<section>
+					<h2 className="mb-4 text-2xl font-semibold text-white">Add Player</h2>
+					{overview.is_active ? (
+						<AddPlayerForm teamId={id} hasCaptain={hasCaptain} refreshKey={rosterVersion} onAdded={refreshRoster} />
+					) : (
+						<div className="stat-card text-slate-400">This team is inactive, so players can't be added.</div>
 					)}
 				</section>
 			</div>

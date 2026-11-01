@@ -77,6 +77,40 @@ router.get("/", async (_, res) => {
 });
 
 
+// api/members/available -- active members not currently on a team (who can be added to a roster)
+// Declared before /:id so "available" isn't read as an ID
+router.get("/available", async (_, res) => {
+
+	try {
+
+		const result = await pool.query(
+			`
+			SELECT m.member_id, m.real_name, m.display_name, m.is_active
+			FROM members m
+			WHERE m.is_active
+				AND NOT EXISTS (
+					SELECT 1
+					FROM team_members tm
+					WHERE tm.member_id = m.member_id
+						AND tm.end_date IS NULL
+				)
+			ORDER BY m.display_name
+			`
+		);
+
+		return res.status(200).json(result.rows);
+
+	} catch (error) {
+
+		console.error("Error getting available members:", error.message);
+
+		return res.status(500).json({ error: "Internal Server Error" });
+
+	}
+
+});
+
+
 // api/members/:id -- Get member info by ID
 router.get("/:id", async (req, res) => {
 

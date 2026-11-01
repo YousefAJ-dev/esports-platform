@@ -5,6 +5,11 @@ export function getMembers(): Promise<MemberSummary[]> {
 	return apiRequest<MemberSummary[]>('/members');
 }
 
+// Active members who aren't on a team yet
+export function getAvailableMembers(): Promise<MemberSummary[]> {
+	return apiRequest<MemberSummary[]>('/members/available');
+}
+
 export function getMemberByID(id: string | undefined): Promise<MemberSummary> {
 	return apiRequest<MemberSummary>(`/members/${id}`);
 }

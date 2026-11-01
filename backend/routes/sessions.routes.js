@@ -3,6 +3,7 @@ const router = express.Router();
 const { getMissingFields } = require('../utils/validation');
 const pool = require('../db/pool');
 const { handleDbError } = require('../utils/dbErrors');
+const { handleRuleError, parseMatchTeamIds, assertSessionEditable, assertTeamsCanPlay, setMatchTeams } = require('../utils/businessRules');
 
 
 // POST sessions
@@ -30,7 +31,10 @@ router.post('/', async (req, res) => {
 			});
 		}
 
-		const { event_id, session_type, scheduled_start, scheduled_end, actual_start, actual_end, timezone, status } = req.body;
+		const { event_id, session_type, scheduled_start, scheduled_end, actual_start, actual_end, timezone, status, team_ids } = req.body;
+
+		// A session must be played by exactly two teams
+		const teamIds = parseMatchTeamIds(team_ids);
 
 		// eventID FK check
 		const eventCheck = await pool.query(
@@ -66,39 +70,63 @@ router.post('/', async (req, res) => {
 		}
 
 
-		const result = await pool.query(
-			`
-			INSERT INTO sessions ( 
-			event_id, 
-			session_type, 
-			scheduled_start, 
-			scheduled_end, 
-			actual_start, 
-			actual_end, 
-			timezone, 
-			status
-			)
-			VALUES (
-			$1,
-			$2,
-			$3::timestamp AT TIME ZONE $7,
-			$4::timestamp AT TIME ZONE $7,
-			$5::timestamp AT TIME ZONE $7,
-			$6::timestamp AT TIME ZONE $7,
-			$7,
-			$8
-			)
-			RETURNING session_id, event_id, session_type, scheduled_start, scheduled_end, timezone, status;
-			`
-			// The create form sends "" for blank actual times, which Postgres can't cast
-			, [event_id, session_type, scheduled_start, scheduled_end,
-				actual_start || null, actual_end || null,
-				timezone, status ?? "Upcoming"]
-		);
+		// The session and its teams are saved together, so a match never exists without its teams
+		const client = await pool.connect();
 
-		return res.status(201).json(result.rows[0]);
+		try {
+
+			await client.query('BEGIN');
+
+			const result = await client.query(
+				`
+				INSERT INTO sessions ( 
+				event_id, 
+				session_type, 
+				scheduled_start, 
+				scheduled_end, 
+				actual_start, 
+				actual_end, 
+				timezone, 
+				status
+				)
+				VALUES (
+				$1,
+				$2,
+				$3::timestamp AT TIME ZONE $7,
+				$4::timestamp AT TIME ZONE $7,
+				$5::timestamp AT TIME ZONE $7,
+				$6::timestamp AT TIME ZONE $7,
+				$7,
+				$8
+				)
+				RETURNING session_id, event_id, session_type, scheduled_start, scheduled_end, timezone, status;
+				`
+				// The create form sends "" for blank actual times, which Postgres can't cast
+				, [event_id, session_type, scheduled_start, scheduled_end,
+					actual_start || null, actual_end || null,
+					timezone, status ?? "Upcoming"]
+			);
+
+			const session = result.rows[0];
+
+			// Checked after the insert so the overlap check can use the stored (timezone-converted) times
+			await assertTeamsCanPlay(client, session.session_id, teamIds);
+			await setMatchTeams(client, session.session_id, teamIds);
+
+			await client.query('COMMIT');
+
+			return res.status(201).json({ ...session, team_ids: teamIds });
+
+		} catch (error) {
+			await client.query('ROLLBACK');
+			throw error;
+		} finally {
+			client.release();
+		}
 
 	} catch (error) {
+
+		if (handleRuleError(error, res)) return;
 
 		console.error('Error creating session: ', error.message);
 
@@ -344,6 +372,48 @@ router.get('/:id/overview', async (req, res) => {
 });
 
 
+// PUT api/sessions/:id/teams - replace the two teams playing a match
+router.put('/:id/teams', async (req, res) => {
+
+	const id = parseInt(req.params.id);
+
+	if (isNaN(id)) {
+		return res.status(400).json({ error: `Error invalid ID: ${req.params.id}` });
+	}
+
+	const client = await pool.connect();
+
+	try {
+
+		const teamIds = parseMatchTeamIds(req.body.team_ids);
+
+		await client.query('BEGIN');
+
+		await assertSessionEditable(client, id);
+		await assertTeamsCanPlay(client, id, teamIds);
+		await setMatchTeams(client, id, teamIds);
+
+		await client.query('COMMIT');
+
+		return res.status(200).json({ session_id: id, team_ids: teamIds });
+
+	} catch (error) {
+
+		await client.query('ROLLBACK');
+
+		if (handleRuleError(error, res)) return;
+
+		console.error("Error updating session teams:", error.message);
+
+		return res.status(500).json({ error: "Internal Server Error" });
+
+	} finally {
+		client.release();
+	}
+
+});
+
+
 // PUT api/sessions/:id/results - save every team's score/winner for a match in one transaction
 router.put('/:id/results', async (req, res) => {
 
@@ -433,43 +503,34 @@ router.patch('/:id', async (req, res) => {
 			'status'
 		];
 
+		const timeFields = ['scheduled_start', 'scheduled_end', 'actual_start', 'actual_end'];
+
 		let values = [];
 		let fields = [];
-		let index = 2;
-		let timeZoneIndex = 1;
 
-		let timezone  = req.body.timezone; 
-
-		if (timezone === undefined) {
-			console.log("Reverting to Browser Timezone");
-			timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-		}
-		
-		values.push(timezone);
+		// Times are read as wall-clock time in the submitted timezone, or the session's saved one.
+		// The timezone param is only added when a time field uses it, since an unused param fails to type.
+		let tzExpr = null;
+		const timeZoneExpr = () => {
+			if (!tzExpr) {
+				values.push(req.body.timezone ?? null);
+				tzExpr = `COALESCE($${values.length}::text, timezone)`;
+			}
+			return tzExpr;
+		};
 
 		Object.keys(req.body).forEach(field => {
-			
+
 			if (!allowedFields.includes(field)){
 				return;
 			}
 
-			if (field === 'timezone'){
-				fields.push(`${field} = $${timeZoneIndex}`);
-				return;
-			}
-
-			if (field === 'scheduled_start' || field === 'scheduled_end' || 
-				(field === 'actual_start' && req.body.actual_start !== undefined) || 
-				(field === 'actual_end' && req.body.actual_end !== undefined)){
-				fields.push(`${field} = $${index}::timestamp AT TIME ZONE $${timeZoneIndex}`);
-				values.push(req.body[field]);
-				index++;
-				return;
-			}
-
-			fields.push(`${field} = $${index}`);
 			values.push(req.body[field]);
-			index++;
+			const placeholder = `$${values.length}`;
+
+			fields.push(timeFields.includes(field)
+				? `${field} = ${placeholder}::timestamp AT TIME ZONE ${timeZoneExpr()}`
+				: `${field} = ${placeholder}`);
 
 		});
 
@@ -486,7 +547,7 @@ router.patch('/:id', async (req, res) => {
 			`
 		UPDATE sessions
 		SET ${fields.join(', ')}
-		WHERE session_id = $${index}
+		WHERE session_id = $${values.length}
 		RETURNING session_id, event_id, session_type, scheduled_start, scheduled_end, actual_start, actual_end, session_type, timezone, status
 		`;
 

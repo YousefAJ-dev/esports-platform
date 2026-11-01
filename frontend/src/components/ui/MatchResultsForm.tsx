@@ -4,7 +4,8 @@ import { useAsyncData } from "../../hooks/useAsyncData";
 import type { MatchResult, SessionTeam } from "../../types/sessions";
 
 type MatchResultsFormProps = {
-	sessionId: string | undefined
+	sessionId: string | undefined,
+	refreshKey?: number
 };
 
 type ResultsEditorProps = {
@@ -83,10 +84,10 @@ function ResultsEditor({ sessionId, teams }: ResultsEditorProps) {
 	);
 }
 
-export function MatchResultsForm({ sessionId }: MatchResultsFormProps) {
+export function MatchResultsForm({ sessionId, refreshKey = 0 }: MatchResultsFormProps) {
 
 	const { data: teams, errorMsg, isLoading } = useAsyncData(
-		() => getSessionTeams(sessionId), "Error fetching match teams", sessionId
+		() => getSessionTeams(sessionId), "Error fetching match teams", `${sessionId}:${refreshKey}`
 	);
 
 	if (isLoading) return <p className="text-purple-300">Loading results...</p>;
@@ -100,7 +101,8 @@ export function MatchResultsForm({ sessionId }: MatchResultsFormProps) {
 		);
 	}
 
-	return <ResultsEditor sessionId={sessionId} teams={teams} />;
+	// Keyed on the team IDs so the editor's score state resets when the teams change
+	return <ResultsEditor key={teams.map(team => team.team_id).join("-")} sessionId={sessionId} teams={teams} />;
 }
 
 export default MatchResultsForm;

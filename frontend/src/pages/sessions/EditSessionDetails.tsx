@@ -5,6 +5,7 @@ import FormError from "../../components/ui/FormError";
 import type { SessionSummary } from "../../types/sessions";
 import { getSessionByID, updateSessionByID } from "../../api/sessionsApi";
 import MatchResultsForm from "../../components/ui/MatchResultsForm";
+import MatchTeamsForm from "../../components/ui/MatchTeamsForm";
 import StatusMessage from "../../components/ui/StatusMessage";
 
 export function EditSessionDetails() {
@@ -13,6 +14,10 @@ export function EditSessionDetails() {
 	const [errorMsg, setErrorMsg] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 	const [submitError, setSubmitError] = useState<string | null>(null);
+	// Saved status (not the live dropdown) decides whether teams are locked
+	const [savedStatus, setSavedStatus] = useState<string>("");
+	// Bumped when teams change so the results section reloads with the new teams
+	const [teamsVersion, setTeamsVersion] = useState<number>(0);
 
 	const { id } = useParams();
 	const navigate = useNavigate();
@@ -46,8 +51,8 @@ export function EditSessionDetails() {
 			try {
 
 				const data = await getSessionByID(id);
-				console.log(data);
 				// Times are shown in the session's own timezone, since that's how the backend reads them back
+				setSavedStatus(data.status);
 				setFormData({
 					...data,
 					scheduled_start: convertDateToInput(data.scheduled_start, data.timezone),
@@ -219,7 +224,7 @@ export function EditSessionDetails() {
 						<option value="Upcoming">Upcoming</option>
 						<option value="In-Progress">In-Progress</option>
 						<option value="Completed">Completed</option>
-						<option value="Upcoming">Upcoming</option>
+						<option value="Cancelled">Cancelled</option>
 					</select>
 				</div>
 
@@ -230,9 +235,13 @@ export function EditSessionDetails() {
 				</div>
 			</form>
 
+			{/* Match Teams */}
+			<h2 className="mt-6 text-2xl font-semibold text-white">Teams</h2>
+			<MatchTeamsForm sessionId={id} status={savedStatus} onSaved={() => setTeamsVersion(v => v + 1)} />
+
 			{/* Match Results */}
 			<h2 className="mt-6 text-2xl font-semibold text-white">Results</h2>
-			<MatchResultsForm sessionId={id} />
+			<MatchResultsForm sessionId={id} refreshKey={teamsVersion} />
 		</section>
 	);
 

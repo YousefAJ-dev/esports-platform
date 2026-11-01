@@ -30,6 +30,13 @@ export type TeamRosterEntry = {
 	start_date: string
 };
 
+// Body for POST /teams/:id/members; start_date defaults to today on the server
+export type AddTeamMemberPayload = {
+	member_id: number,
+	team_position: string,
+	start_date?: string
+};
+
 export type UpdateTeamPayload = Partial<Omit<TeamSummary, "team_id" | "created_on">>;
 export type CreateTeamPayload = Omit<TeamSummary, "team_id" | "created_on">;
 

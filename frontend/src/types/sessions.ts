@@ -21,6 +21,12 @@ export type CreateSessionPayload = {
 	timezone: string,
 	session_type: string,
 	status: string,
+	team_ids: number[],
+};
+
+// Body for PUT /sessions/:id/teams - a match always has exactly two teams
+export type MatchTeamsPayload = {
+	team_ids: number[]
 };
 
 export type SessionOverview = {
