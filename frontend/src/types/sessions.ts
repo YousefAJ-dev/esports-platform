@@ -3,8 +3,8 @@ export type SessionSummary = {
 	event_id: number,
 	scheduled_start: string,
 	scheduled_end: string,
-	actual_start?: string,
-	actual_end?: string,
+	actual_start?: string | null,
+	actual_end?: string | null,
 	timezone: string,
 	session_type: string,
 	status: string

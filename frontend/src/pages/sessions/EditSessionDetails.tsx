@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import { convertDateToInput, inputChangeHandler } from "../../helper/helperFunctions";
+import { convertDateToInput, getTimeRangeError, inputChangeHandler } from "../../helper/helperFunctions";
+import FormError from "../../components/ui/FormError";
 import type { SessionSummary } from "../../types/sessions";
 import { getSessionByID, updateSessionByID } from "../../api/sessionsApi";
 import MatchResultsForm from "../../components/ui/MatchResultsForm";
+import StatusMessage from "../../components/ui/StatusMessage";
 
 export function EditSessionDetails() {
 
 	const [formData, setFormData] = useState<SessionSummary | null>(null);
 	const [errorMsg, setErrorMsg] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState<boolean>(true);
+	const [submitError, setSubmitError] = useState<string | null>(null);
 
 	const { id } = useParams();
 	const navigate = useNavigate();
@@ -44,12 +47,13 @@ export function EditSessionDetails() {
 
 				const data = await getSessionByID(id);
 				console.log(data);
+				// Times are shown in the session's own timezone, since that's how the backend reads them back
 				setFormData({
 					...data,
-					scheduled_start: convertDateToInput(data.scheduled_start),
-					scheduled_end: convertDateToInput(data.scheduled_end),
-					actual_start: data.actual_start ? convertDateToInput(data.actual_start) : undefined,
-					actual_end: data.actual_end ? convertDateToInput(data.actual_end) : undefined,
+					scheduled_start: convertDateToInput(data.scheduled_start, data.timezone),
+					scheduled_end: convertDateToInput(data.scheduled_end, data.timezone),
+					actual_start: data.actual_start ? convertDateToInput(data.actual_start, data.timezone) : undefined,
+					actual_end: data.actual_end ? convertDateToInput(data.actual_end, data.timezone) : undefined,
 				});
 
 			} catch {
@@ -63,21 +67,14 @@ export function EditSessionDetails() {
 
 	}, [id]);
 
-	if (isLoading) {
-		<p>Page Is Loading...</p>
+	if (isLoading || errorMsg || !formData) {
+		return <StatusMessage isLoading={isLoading} errorMsg={errorMsg ?? "Session not found"} loadingText="Loading session..." />;
 	}
 
-	if (errorMsg) {
-		return (
-			<section className="min-h-screen bg-slate-950 p-6 text-slate-100">
-				<p className="text-purple-300">Loading events...</p>
-			</section>
-		);
-	}
-
-	if (!formData) {
-		return;
-	}
+	// Checked on every render so the message shows up as soon as the times are wrong
+	const timeError =
+		getTimeRangeError(formData.scheduled_start, formData.scheduled_end, "the scheduled start", "Scheduled end")
+		?? getTimeRangeError(formData.actual_start, formData.actual_end, "the actual start", "Actual end");
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
 		inputChangeHandler(e, setFormData)
@@ -86,15 +83,18 @@ export function EditSessionDetails() {
 	const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
-		if (!id){
-			return <p>No ID Found</p>;
-		}
+		if (!id || timeError) return;
 
 		try {
-			await updateSessionByID(id, formData);
-			navigate(`/sessions`);
+			// A cleared actual time comes through as "", which the backend can't cast - send null instead
+			await updateSessionByID(id, {
+				...formData,
+				actual_start: formData.actual_start || null,
+				actual_end: formData.actual_end || null,
+			});
+			navigate(`/sessions/${id}`);
 		} catch (error) {
-			
+			setSubmitError(error instanceof Error ? error.message : "Error updating session");
 		}
 	}
 
@@ -167,7 +167,7 @@ export function EditSessionDetails() {
 						id="actual_start"
 						type="datetime-local"
 						name="actual_start"
-						value={formData.actual_start}
+						value={formData.actual_start ?? ""}
 						onChange={handleInputChange}
 						className="purple-input-box"
 					/>
@@ -180,7 +180,7 @@ export function EditSessionDetails() {
 						id="actual_end"
 						type="datetime-local"
 						name="actual_end"
-						value={formData.actual_end}
+						value={formData.actual_end ?? ""}
 						onChange={handleInputChange}
 						className="purple-input-box"
 					/>
@@ -223,8 +223,10 @@ export function EditSessionDetails() {
 					</select>
 				</div>
 
+				<FormError message={timeError ?? submitError} />
+
 				<div>
-					<button type="submit" className="green-btn green-btn-clickable mt-10 mb-5">Save Changes</button>
+					<button type="submit" disabled={timeError !== null} className="green-btn green-btn-clickable mt-10 mb-5 disabled:cursor-not-allowed disabled:opacity-50">Save Changes</button>
 				</div>
 			</form>
 

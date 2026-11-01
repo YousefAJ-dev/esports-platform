@@ -53,15 +53,42 @@ export function inputChangeHandler<T>(
 };
 
 
-export function convertDateToInput(date:string){
+// Formats a stored timestamp as the "YYYY-MM-DDTHH:mm" string a datetime-local input expects.
+// Pass the record's timezone: the backend reads submitted times as wall-clock time in that zone,
+// so the input has to show them in that zone too or saving would shift them.
+export function convertDateToInput(date: string, timeZone?: string) {
 
-	const minute = String(new Date(date).getMinutes()).padStart(2, "0");
-	const hour = String(new Date(date).getHours()).padStart(2, "0");
-	const year = String(new Date(date).getFullYear()).padStart(2, "0");
-	const month = String(new Date(date).getMonth() + 1).padStart(2, "0");
-	const day = String(new Date(date).getDate()).padStart(2, "0");
+	const format = (zone?: string) => new Intl.DateTimeFormat("en-CA", {
+		timeZone: zone,
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+		hour: "2-digit",
+		minute: "2-digit",
+		hourCycle: "h23"
+	}).formatToParts(new Date(date));
 
-	return `${year}-${month}-${day}T${hour}:${minute}`;
+	let parts: Intl.DateTimeFormatPart[];
+	try {
+		parts = format(timeZone);
+	} catch {
+		// Unknown timezone name, fall back to the browser's zone
+		parts = format();
+	}
+
+	const get = (type: Intl.DateTimeFormatPartTypes) => parts.find(part => part.type === type)?.value ?? "";
+
+	return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
+}
+
+
+// Returns an error message when an end time isn't after its start time, otherwise null.
+// Both values are datetime-local strings in the same zone, so a string compare is enough.
+export function getTimeRangeError(start: string | undefined | null, end: string | undefined | null, startLabel = "start time", endLabel = "End time") {
+
+	if (!start || !end) return null;
+
+	return end <= start ? `${endLabel} must be after ${startLabel}.` : null;
 }
 
 // Returns only the fields that differ from the original, so PATCH payloads stay minimal. O(k) over keys.

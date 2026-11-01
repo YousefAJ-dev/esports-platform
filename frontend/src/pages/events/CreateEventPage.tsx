@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import type { CreateEventPayload } from "../../types/events";
-import { inputChangeHandler } from "../../helper/helperFunctions";
+import { getTimeRangeError, inputChangeHandler } from "../../helper/helperFunctions";
+import FormError from "../../components/ui/FormError";
 import { createEvent } from "../../api/eventsApi";
 
 export function EventCreatePage(){
@@ -20,7 +21,12 @@ export function EventCreatePage(){
 		status: "Upcoming",
 	});
 
+	const [submitError, setSubmitError] = useState<string | null>(null);
+
 	const timeZones = Intl.supportedValuesOf("timeZone");
+
+	// Checked on every render so the message shows up as soon as the times are wrong
+	const timeError = getTimeRangeError(formData.start_on, formData.end_on, "the start date", "End date");
 
 	const handleInputChange = (e:React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
 		inputChangeHandler(e, setFormData);
@@ -29,11 +35,13 @@ export function EventCreatePage(){
 	const handleSubmit = async (e:React.SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
+		if (timeError) return;
+
 		try {
 			const event = await createEvent(formData);
 			navigate(`/events/${event.event_id}`)
 		} catch (error) {
-			console.error("Error Creating Event", error);
+			setSubmitError(error instanceof Error ? error.message : "Error creating event");
 		}
 		
 	};
@@ -163,8 +171,10 @@ export function EventCreatePage(){
 
 					</div>
 
+					<FormError message={timeError ?? submitError} />
+
 					<div>
-						<button type="submit" className="green-btn green-btn-clickable mt-10 mb-5">Save Changes</button>
+						<button type="submit" disabled={timeError !== null} className="green-btn green-btn-clickable mt-10 mb-5 disabled:cursor-not-allowed disabled:opacity-50">Save Changes</button>
 					</div>
 				</form>
 			</section>

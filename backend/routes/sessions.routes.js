@@ -502,6 +502,12 @@ router.patch('/:id', async (req, res) => {
 
 	} catch (error) {
 
+		// chk_session_schedule_date / chk_session_actual_date failed
+		if (error.code === '23514') {
+			return res.status(400).json({ error: "End time must be after start time" });
+		}
+
+
 		console.error('Error updating session: ', error.message);
 
 		return res.status(500).json({

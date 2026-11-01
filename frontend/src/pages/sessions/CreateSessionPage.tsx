@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { CreateSessionPayload } from "../../types/sessions";
 import { useNavigate, useSearchParams } from "react-router";
-import { inputChangeHandler } from "../../helper/helperFunctions";
+import { getTimeRangeError, inputChangeHandler } from "../../helper/helperFunctions";
+import FormError from "../../components/ui/FormError";
 import { createSession } from "../../api/sessionsApi";
 
 export function CreateSessionPage() {
@@ -39,6 +40,13 @@ export function CreateSessionPage() {
 		}
 	);
 
+	const [submitError, setSubmitError] = useState<string | null>(null);
+
+	// Checked on every render so the message shows up as soon as the times are wrong
+	const timeError =
+		getTimeRangeError(formData.scheduled_start, formData.scheduled_end, "the scheduled start", "Scheduled end")
+		?? getTimeRangeError(formData.actual_start, formData.actual_end, "the actual start", "Actual end");
+
 	const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement | HTMLSelectElement>) => {
 		inputChangeHandler(e, setFormData);
 	}
@@ -46,11 +54,13 @@ export function CreateSessionPage() {
 	const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
+		if (timeError) return;
+
 		try {
 			const session = await createSession(formData);
 			navigate(`/sessions/${session.session_id}`)
 		} catch (error) {
-
+			setSubmitError(error instanceof Error ? error.message : "Error creating match");
 		}
 	}
 
@@ -204,8 +214,10 @@ export function CreateSessionPage() {
 
 					</div>
 
+					<FormError message={timeError ?? submitError} />
+
 					<div>
-						<button type="submit" className="green-btn green-btn-clickable mt-10 mb-5">Save Changes</button>
+						<button type="submit" disabled={timeError !== null} className="green-btn green-btn-clickable mt-10 mb-5 disabled:cursor-not-allowed disabled:opacity-50">Save Changes</button>
 					</div>
 				</form>
 			</section>

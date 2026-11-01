@@ -454,7 +454,7 @@ router.patch('/:id', async (req, res) => {
 		const eventTimeZone = req.body.timezone;
 
 		// ***SAFETY CHECK*** to ensure timezone is present when updating date/time
-		if ((req.body.start_on !== undefined || req.body.start_on !== undefined)
+		if ((req.body.start_on !== undefined || req.body.end_on !== undefined)
 			&& (!eventTimeZone)) {
 
 			return res.status(400).json({
@@ -533,6 +533,11 @@ router.patch('/:id', async (req, res) => {
 		return res.json(result.rows[0]);
 
 	} catch (error) {
+
+		// chk_event_dates failed - the update left end_on at or before start_on
+		if (error.code === '23514') {
+			return res.status(400).json({ error: "End Date & Time must be after Start Date & Time" });
+		}
 
 		// Log error for debugging
 		console.error('Error patching event:', error.message);
