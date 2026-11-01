@@ -296,3 +296,7 @@ Content-Type: application/json
 
 ### DELETE users
 DELETE http://localhost:3000/api/users/3
+
+
+### GET match_details
+GET http://localhost:3000/api/events/1/matches
