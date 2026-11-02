@@ -306,6 +306,10 @@ The backend tests rebuild their own `esports_test` schema from the schema and se
 
 GitHub Actions runs both suites, the frontend lint and the production build on every push and pull request.
 
+### Deploying
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the server setup (nginx + Node on EC2) and `deploy/deploy.sh`, which updates, builds, restarts and health-checks the live server.
+
 ## Development Roadmap
 
 ### Done
