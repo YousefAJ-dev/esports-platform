@@ -1,5 +1,7 @@
 # Esports Tournament Management SaaS Platform
 
+[![CI](https://github.com/YousefAJ-dev/esports-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/YousefAJ-dev/esports-platform/actions/workflows/ci.yml)
+
 A full-stack event management platform for creating, organizing, and managing esports tournaments, teams, members, events, and sessions.
 
 The project is designed around a RESTful API and normalized PostgreSQL database, with a React frontend for interacting with tournament data.
@@ -290,22 +292,34 @@ npm install
 npm run dev
 ```
 
+### Running the Tests
+
+```bash
+cd backend
+npm test        # 52 API tests: logins, permissions, rosters, matches, standings and more
+
+cd frontend
+npm test        # unit tests for permission and date helpers
+```
+
+The backend tests rebuild their own `esports_test` schema from the schema and seed files, so your data in `public` is never touched. See [backend/tests/README.md](backend/tests/README.md) for how they work.
+
+GitHub Actions runs both suites, the frontend lint and the production build on every push and pull request.
+
 ## Development Roadmap
 
-### In Progress
+### Done
 
 * React/Tailwind frontend
-* Additional REST API functionality
-* Improved validation and error handling
-* Event and session management workflows
+* Event and match management with brackets, results and standings
+* Business rule validation (rosters, match lifecycle, event registration)
+* Authentication and role-based access control (see [docs/RBAC.md](docs/RBAC.md))
+* Automated testing and CI
 
 ### Planned
 
-* Role-Based Access Control
-* Authentication and authorization
-* Automated testing
 * Docker containerization
-* CI/CD pipeline
+* Continuous deployment
 * NGINX reverse proxy
 * AWS production deployment
 * CloudWatch monitoring
