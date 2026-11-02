@@ -1,17 +1,35 @@
 # Dependencies
 node_modules/
 
-# Environment variables
+# Build output
+dist/
+dist-ssr/
+
+# Environment files hold passwords and secrets; the .env.example templates stay committed
 .env
+.env.*
+!.env.example
 
 # Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+*.log
+logs/
 
-# OS
+# Test output
+coverage/
+
+# Editors and OS files
+.vscode/*
+!.vscode/extensions.json
+.idea/
 .DS_Store
+Thumbs.db
+desktop.ini
+*.swp
 
-docs/plans
+# Local tool folders (editor/assistant artifacts, not project code)
+.agents/
+.github/appmod/
+.claude/settings.local.json
 
-backend/db/seed
+# Local planning notes
+docs/plans/
