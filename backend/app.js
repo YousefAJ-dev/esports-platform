@@ -67,17 +67,23 @@ app.use(express.json())
 	POST /api/members
 	DELETE /api/sessions/2
 */
-app.use((req, res, next) => {
-	const time = new Date().toISOString();
-	console.log(`[${time}] ${req.method} ${req.originalUrl}`);
-	next();
-});
+// Skipped while the automated tests run so their output only shows results
+const isTest = process.env.NODE_ENV === 'test';
+
+if (!isTest) {
+	app.use((req, res, next) => {
+		const time = new Date().toISOString();
+		console.log(`[${time}] ${req.method} ${req.originalUrl}`);
+		next();
+	});
+}
 
 // Sessions: the cookie only holds a random ID; the session itself lives in the auth_sessions table
 app.use(session({
 	name: SESSION_COOKIE,
 	secret: process.env.SESSION_SECRET,
-	store: new PgSessionStore({ pool, tableName: 'auth_sessions' }),
+	// The store prunes expired sessions on a timer; tests turn it off so each test process can exit
+	store: new PgSessionStore({ pool, tableName: 'auth_sessions', pruneSessionInterval: isTest ? false : undefined }),
 	resave: false,              // don't rewrite unchanged sessions
 	saveUninitialized: false,   // visitors don't get a session until they log in
 	rolling: true,              // each request pushes the expiry back, so active users stay logged in
